@@ -27,9 +27,12 @@ import java.nio.channels.ReadableByteChannel;
 import org.springframework.lang.Nullable;
 
 /**
+ * TODO 【组件】资源
+ * 用于从实际资源中抽象资源类型，比如文件或者路径
  * Interface for a resource descriptor that abstracts from the actual
  * type of underlying resource, such as a file or class path resource.
  *
+ * 如果资源是物理存在，则为每一个资源打开一个工作量，如果是URL或者文件局部，需要特定的实现
  * <p>An InputStream can be opened for every resource if it exists in
  * physical form, but a URL or File handle can just be returned for
  * certain resources. The actual behavior is implementation-specific.
