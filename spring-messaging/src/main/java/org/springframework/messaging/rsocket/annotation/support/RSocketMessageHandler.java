@@ -53,7 +53,7 @@ import org.springframework.util.StringUtils;
  * Extension of {@link MessageMappingMessageHandler} to use as an RSocket
  * responder by handling incoming streams via {@code @MessageMapping} annotated
  * methods.
- * <p>Use {@link #clientAcceptor()} and {@link #serverAcceptor()} to obtain
+ * <p>Use {@link #clientResponder()} and {@link #serverResponder()} to obtain
  * {@link io.rsocket.RSocketFactory.ClientRSocketFactory#acceptor(Function) client} or
  * {@link io.rsocket.RSocketFactory.ServerRSocketFactory#acceptor(SocketAcceptor) server}
  * side adapters.
@@ -223,6 +223,7 @@ public class RSocketMessageHandler extends MessageMappingMessageHandler {
 	}
 
 
+	@Override
 	@Nullable
 	protected CompositeMessageCondition getCondition(AnnotatedElement element) {
 		MessageMapping annot1 = AnnotatedElementUtils.findMergedAnnotation(element, MessageMapping.class);
@@ -270,7 +271,7 @@ public class RSocketMessageHandler extends MessageMappingMessageHandler {
 	 * <p>Subsequent stream requests can be handled with
 	 * {@link MessageMapping MessageMapping} methods.
 	 */
-	public SocketAcceptor serverAcceptor() {
+	public SocketAcceptor serverResponder() {
 		return (setupPayload, sendingRSocket) -> {
 			MessagingRSocket responder = createResponder(setupPayload, sendingRSocket);
 			return responder.handleConnectionSetupPayload(setupPayload).then(Mono.just(responder));
@@ -291,7 +292,7 @@ public class RSocketMessageHandler extends MessageMappingMessageHandler {
 	 * <p>Subsequent stream requests can be handled with
 	 * {@link MessageMapping MessageMapping} methods.
 	 */
-	public BiFunction<ConnectionSetupPayload, RSocket, RSocket> clientAcceptor() {
+	public BiFunction<ConnectionSetupPayload, RSocket, RSocket> clientResponder() {
 		return (setupPayload, sendingRSocket) -> {
 			MessagingRSocket responder = createResponder(setupPayload, sendingRSocket);
 			responder.handleConnectionSetupPayload(setupPayload).subscribe();
@@ -305,16 +306,16 @@ public class RSocketMessageHandler extends MessageMappingMessageHandler {
 		Assert.notNull(dataMimeType, "No `dataMimeType` in ConnectionSetupPayload and no default value");
 
 		s = setupPayload.metadataMimeType();
-		MimeType metaMimeType = StringUtils.hasText(s) ? MimeTypeUtils.parseMimeType(s) : this.defaultMetadataMimeType;
-		Assert.notNull(dataMimeType, "No `metadataMimeType` in ConnectionSetupPayload and no default value");
+		MimeType metadataMimeType = StringUtils.hasText(s) ? MimeTypeUtils.parseMimeType(s) : this.defaultMetadataMimeType;
+		Assert.notNull(metadataMimeType, "No `metadataMimeType` in ConnectionSetupPayload and no default value");
 
 		RSocketStrategies strategies = this.rsocketStrategies;
 		Assert.notNull(strategies, "No RSocketStrategies. Was afterPropertiesSet not called?");
-		RSocketRequester requester = RSocketRequester.wrap(rsocket, dataMimeType, metaMimeType, strategies);
+		RSocketRequester requester = RSocketRequester.wrap(rsocket, dataMimeType, metadataMimeType, strategies);
 
 		Assert.notNull(this.metadataExtractor, () -> "No MetadataExtractor. Was afterPropertiesSet not called?");
 
-		return new MessagingRSocket(dataMimeType, metaMimeType, this.metadataExtractor, requester,
+		return new MessagingRSocket(dataMimeType, metadataMimeType, this.metadataExtractor, requester,
 				this, getRouteMatcher(), strategies.dataBufferFactory());
 	}
 

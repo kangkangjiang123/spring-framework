@@ -4,6 +4,7 @@ buildscript {
 	}
 	dependencies {
 		classpath("io.spring.gradle:propdeps-plugin:0.0.9.RELEASE")
+		classpath("io.spring.nohttp:nohttp-gradle:0.0.3.RELEASE")
 		classpath("org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.16")
 	}
 }
@@ -46,7 +47,7 @@ ext {
 	rxjava2Version       = "2.2.10"
 	slf4jVersion         = "1.7.26"	  // spring-jcl + consistent 3rd party deps
 	tiles3Version        = "3.0.8"
-	tomcatVersion        = "9.0.21"
+	tomcatVersion        = "9.0.22"
 	undertowVersion      = "2.0.22.Final"
 
 	gradleScriptDir = "${rootProject.projectDir}/gradle"
@@ -74,6 +75,9 @@ configure(allprojects) { project ->
 		applyMavenExclusions = false
 		generatedPomCustomization {
 			enabled = false
+		}
+		imports {
+			mavenBom "org.junit:junit-bom:${junit5Version}"
 		}
 	}
 
@@ -133,6 +137,7 @@ configure(allprojects) { project ->
 		systemProperty("java.awt.headless", "true")
 		systemProperty("testGroups", project.properties.get("testGroups"))
 		systemProperty("io.netty.leakDetection.level", "paranoid")
+		useJUnitPlatform()
 		scanForTestClasses = false
 		include(["**/*Tests.class", "**/*Test.class"])
 		// Since we set scanForTestClasses to false, we need to filter out inner
@@ -143,7 +148,7 @@ configure(allprojects) { project ->
 	}
 
 	checkstyle {
-		toolVersion = "8.21"
+		toolVersion = "8.22"
 		configDir = rootProject.file("src/checkstyle")
 	}
 
@@ -164,6 +169,10 @@ configure(allprojects) { project ->
 		testCompile("io.mockk:mockk:1.9.3")
 		testCompile("org.hamcrest:hamcrest-all:1.3")
 		testCompile("org.assertj:assertj-core:3.12.2")
+		// Pull in the latest JUnit 5 Launcher API and the Vintage engine as well
+		// so that we can run JUnit 4 tests in IDEs.
+		testRuntime("org.junit.platform:junit-platform-launcher")
+		testRuntime("org.junit.vintage:junit-vintage-engine")
 		testRuntime("org.apache.logging.log4j:log4j-core:${log4jVersion}")
 		testRuntime("org.apache.logging.log4j:log4j-slf4j-impl:${log4jVersion}")
 		testRuntime("org.apache.logging.log4j:log4j-jul:${log4jVersion}")
@@ -252,8 +261,20 @@ configure(rootProject) {
 	description = "Spring Framework"
 
 	apply plugin: "groovy"
+	apply plugin: "io.spring.nohttp"
 	apply from: "${gradleScriptDir}/jdiff.gradle"
 	apply from: "${gradleScriptDir}/docs.gradle"
+
+	nohttp {
+		source.exclude "**/test-output/**"
+		whitelistFile = project.file("src/nohttp/whitelist.lines")
+		def projectDirURI = project.projectDir.toURI()
+		allprojects.forEach { p ->
+			def outURI = p.file("out").toURI()
+			def pattern = projectDirURI.relativize(outURI).path + "**"
+			source.exclude pattern
+		}
+	}
 
 	dependencyManagement {
 		imports {
