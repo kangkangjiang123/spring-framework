@@ -160,7 +160,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private boolean primary = false;
 
 	private final Map<String, AutowireCandidateQualifier> qualifiers = new LinkedHashMap<>();
-
+	// 创建bean的回调函数
 	@Nullable
 	private Supplier<?> instanceSupplier;
 
@@ -724,6 +724,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	}
 
 	/**
+	 * 设置创建Bean的回调函数
 	 * Specify a callback for creating an instance of the bean,
 	 * as an alternative to a declaratively specified factory method.
 	 * <p>If such a callback is set, it will override any other constructor
@@ -738,6 +739,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	}
 
 	/**
+	 * 返回一个回调函数，用于创建bean的实例(如果有的话)。
 	 * Return a callback for creating an instance of the bean, if any.
 	 * @since 5.0
 	 */
@@ -779,6 +781,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	}
 
 	/**
+	 * 返回解析构造函数是在宽松模式下还是在严格模式
 	 * Return whether to resolve constructors in lenient mode or in strict mode.
 	 */
 	public boolean isLenientConstructorResolution() {
@@ -986,6 +989,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	}
 
 	/**
+	 * 返回这个Bean是否是合成的而不是应用程序本身定义的
 	 * Return whether this bean definition is 'synthetic', that is,
 	 * not defined by the application itself.
 	 */
@@ -1092,16 +1096,19 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 		}
 
 		if (hasBeanClass()) {
+			// 检查重写标志的方法
 			prepareMethodOverrides();
 		}
 	}
 
 	/**
+	 * 验证并准备为该bean定义的方法覆盖。检查是否存在具有指定名称的方法。
 	 * Validate and prepare the method overrides defined for this bean.
 	 * Checks for existence of a method with the specified name.
 	 * @throws BeanDefinitionValidationException in case of validation failure
 	 */
 	public void prepareMethodOverrides() throws BeanDefinitionValidationException {
+		// 如果有重写的方法
 		// Check that lookup methods exists.
 		if (hasMethodOverrides()) {
 			Set<MethodOverride> overrides = getMethodOverrides().getOverrides();
@@ -1114,6 +1121,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	}
 
 	/**
+	 * 执行并准备给定的方法重写。
+	 * 检查是否存在指定名称的方法，
+	 * 如果没有找到，则将其标记为未重载。
 	 * Validate and prepare the given method override.
 	 * Checks for existence of a method with the specified name,
 	 * marking it as not overloaded if none found.
@@ -1123,11 +1133,13 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	protected void prepareMethodOverride(MethodOverride mo) throws BeanDefinitionValidationException {
 		int count = ClassUtils.getMethodCountForName(getBeanClass(), mo.getMethodName());
 		if (count == 0) {
+			// 从类中查不到这个方法，无法处理，抛出异常
 			throw new BeanDefinitionValidationException(
 					"Invalid method override: no method with name '" + mo.getMethodName() +
 					"' on class [" + getBeanClassName() + "]");
 		}
 		else if (count == 1) {
+			// 将override标记为未重载，以避免arg类型检查的开销。
 			// Mark override as not overloaded, to avoid the overhead of arg type checking.
 			mo.setOverloaded(false);
 		}

@@ -155,7 +155,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/** Indicates whether any DestructionAwareBeanPostProcessors have been registered. */
 	private volatile boolean hasDestructionAwareBeanPostProcessors;
-
+	// 用字符串对应到相对应的作用域
 	/** Map from scope identifier String to corresponding Scope. */
 	private final Map<String, Scope> scopes = new LinkedHashMap<>(8);
 
@@ -323,14 +323,19 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						}
 					}
 				}
-
+				// 开始创建Bean
 				// Create bean instance.
 				if (mbd.isSingleton()) {
+					// 是单例模式的bean
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							//创建Bean
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {
+							// 手动从单例模式bean的缓存中清除缓存
+							// 他可能是没有创建完成而提前暴露出去的，已用来解决循环依赖
+							// 还需要删除引用了这个提前暴露bean的其他bean
 							// Explicitly remove instance from singleton cache: It might have been put there
 							// eagerly by the creation process, to allow for circular reference resolution.
 							// Also remove any beans that received a temporary reference to the bean.
@@ -338,38 +343,55 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw ex;
 						}
 					});
+					// 从工厂中获取Bean对象（IOC管理的）
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 
 				else if (mbd.isPrototype()) {
+					// 如果是原型模式，则直接创建新的对象
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
+						// 原型模式创建Bean的前置处理
 						beforePrototypeCreation(beanName);
+						// 创建原型Bean
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {
+						// 原型模式创建Bean的后置处理
 						afterPrototypeCreation(beanName);
 					}
+					// 从工厂中获取Bean对象（IOC管理的）
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 
 				else {
+					// Spring本身支持一共五种作用域
+					// 1. singleton 单例，每个容器有一个bean
+					// 2. prototype 原型，每次创建都是新的bean
+					// 3. request 每次request创建一个
+					// 4. session 每个session创建一个
+					// 5. globalSession 全局 session创建一个
 					String scopeName = mbd.getScope();
 					final Scope scope = this.scopes.get(scopeName);
 					if (scope == null) {
 						throw new IllegalStateException("No Scope registered for scope name '" + scopeName + "'");
 					}
 					try {
+						// 通过scope来获取，会先从缓存中尝试获取，再来创建实例
 						Object scopedInstance = scope.get(beanName, () -> {
+							// 复用原型模式的前置处理
 							beforePrototypeCreation(beanName);
 							try {
+								// 创建Bean
 								return createBean(beanName, mbd, args);
 							}
 							finally {
+								// 复用原型模式的后置处理
 								afterPrototypeCreation(beanName);
 							}
 						});
+						// // 从工厂中获取Bean对象（IOC管理的）
 						bean = getObjectForBeanInstance(scopedInstance, name, beanName, mbd);
 					}
 					catch (IllegalStateException ex) {
@@ -381,6 +403,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 			}
 			catch (BeansException ex) {
+				//创建失败，清除这个bean的已创建标志
 				cleanupAfterBeanCreationFailure(beanName);
 				throw ex;
 			}
@@ -897,6 +920,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * 判断是否有注册过InstantiationAwareBeanPostProcessor类型的bean（前后置处理器）
 	 * Return whether this factory holds a InstantiationAwareBeanPostProcessor
 	 * that will get applied to singleton beans on shutdown.
 	 * @see #addBeanPostProcessor
@@ -1052,7 +1076,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * 原型模式Bean创建的前置处理
 	 * Callback before prototype creation.
+	 * 默认实现将原型注册为当前正在创建的状态。
 	 * <p>The default implementation register the prototype as currently in creation.
 	 * @param beanName the name of the prototype about to be created
 	 * @see #isPrototypeCurrentlyInCreation
@@ -1076,7 +1102,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * 原型模式Bean创建的后置处理
 	 * Callback after prototype creation.
+	 * 默认实现将原型标记为不在创建中。
 	 * <p>The default implementation marks the prototype as not in creation anymore.
 	 * @param beanName the name of the prototype that has been created
 	 * @see #isPrototypeCurrentlyInCreation
@@ -1630,6 +1658,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * bean创建失败后，从以创建Bean中移除对应Bean信息
 	 * Perform appropriate cleanup of cached metadata after bean creation failed.
 	 * @param beanName the name of the bean
 	 */
@@ -1651,6 +1680,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * 删除给定bean名称的单例实例(如果有的话)，但仅当该实例没有用于类型检查之外的其他目的时。（删除提前暴露的bean）
 	 * Remove the singleton instance (if any) for the given bean name,
 	 * but only if it hasn't been used for other purposes than type checking.
 	 * @param beanName the name of the bean
@@ -1761,6 +1791,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * 将指定的bean添加到对应工厂的一次性注册列表中，并注册销毁Bean时需要调用的bean或者方法
+	 * 只能适用于单例模式
 	 * Add the given bean to the list of disposable beans in this factory,
 	 * registering its DisposableBean interface and/or the given destroy method
 	 * to be called on factory shutdown (if applicable). Only applies to singletons.
@@ -1776,6 +1808,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		AccessControlContext acc = (System.getSecurityManager() != null ? getAccessControlContext() : null);
 		if (!mbd.isPrototype() && requiresDestruction(bean, mbd)) {
 			if (mbd.isSingleton()) {
+				// 注册这个单例Bean销毁的时候需要调用的bean
 				// Register a DisposableBean implementation that performs all destruction
 				// work for the given bean: DestructionAwareBeanPostProcessors,
 				// DisposableBean interface, custom destroy method.
@@ -1788,6 +1821,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				if (scope == null) {
 					throw new IllegalStateException("No Scope registered for scope name '" + mbd.getScope() + "'");
 				}
+				// 在用户自定义的作用域里注册这个单例Bean销毁的时候需要调用的bean
 				scope.registerDestructionCallback(beanName,
 						new DisposableBeanAdapter(bean, beanName, mbd, getBeanPostProcessors(), acc));
 			}
@@ -1844,9 +1878,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected abstract BeanDefinition getBeanDefinition(String beanName) throws BeansException;
 
 	/**
+	 * TODO IOC bean创建都会交给这个方法
+	 * 为指定的合并过的bean definition(和参数)创建bean实例。对于子类的bean definition，bean definition已经与父类 bean definition合并。
 	 * Create a bean instance for the given merged bean definition (and arguments).
 	 * The bean definition will already have been merged with the parent definition
 	 * in case of a child definition.
+	 * 所有bean检索方法都将委托给该方法进行实际的bean创建。
 	 * <p>All bean retrieval methods delegate to this method for actual bean creation.
 	 * @param beanName the name of the bean
 	 * @param mbd the merged bean definition for the bean
