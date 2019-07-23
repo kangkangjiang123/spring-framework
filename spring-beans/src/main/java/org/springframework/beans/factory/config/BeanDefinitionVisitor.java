@@ -70,20 +70,29 @@ public class BeanDefinitionVisitor {
 
 
 	/**
+	 * 遍历给定的BeanDefinition对象以及其中包含的MutablePropertyValues和ConstructorArgumentValues。
 	 * Traverse the given BeanDefinition object and the MutablePropertyValues
 	 * and ConstructorArgumentValues contained in them.
 	 * @param beanDefinition the BeanDefinition object to traverse
 	 * @see #resolveStringValue(String)
 	 */
 	public void visitBeanDefinition(BeanDefinition beanDefinition) {
+		// 访问父类
 		visitParentName(beanDefinition);
+		// 访问类的class
 		visitBeanClassName(beanDefinition);
+		// 访问FactoryBean
 		visitFactoryBeanName(beanDefinition);
+		// 访问FactoryMethod
 		visitFactoryMethodName(beanDefinition);
+		// 访问作用域
 		visitScope(beanDefinition);
+		// 如果有定义的属性
 		if (beanDefinition.hasPropertyValues()) {
+			// 访问属性
 			visitPropertyValues(beanDefinition.getPropertyValues());
 		}
+		// 如果有定义的构造参数
 		if (beanDefinition.hasConstructorArgumentValues()) {
 			ConstructorArgumentValues cas = beanDefinition.getConstructorArgumentValues();
 			visitIndexedArgumentValues(cas.getIndexedArgumentValues());
@@ -143,9 +152,12 @@ public class BeanDefinitionVisitor {
 
 	protected void visitPropertyValues(MutablePropertyValues pvs) {
 		PropertyValue[] pvArray = pvs.getPropertyValues();
+		// 遍历属性值
 		for (PropertyValue pv : pvArray) {
+			// 解析为真实的属性
 			Object newVal = resolveValue(pv.getValue());
 			if (!ObjectUtils.nullSafeEquals(newVal, pv.getValue())) {
+				// 如果解析后发生了变换，则进行替换
 				pvs.add(pv.getName(), newVal);
 			}
 		}
@@ -219,6 +231,7 @@ public class BeanDefinitionVisitor {
 			}
 		}
 		else if (value instanceof String) {
+			// 对String类型的解析，主要是properties的占位符替换
 			return resolveStringValue((String) value);
 		}
 		return value;
@@ -283,6 +296,7 @@ public class BeanDefinitionVisitor {
 	}
 
 	/**
+	 * 解析给定的字符串值，例如解析占位符。
 	 * Resolve the given String value, for example parsing placeholders.
 	 * @param strVal the original String value
 	 * @return the resolved String value
@@ -293,7 +307,9 @@ public class BeanDefinitionVisitor {
 			throw new IllegalStateException("No StringValueResolver specified - pass a resolver " +
 					"object into the constructor or override the 'resolveStringValue' method");
 		}
+		// 解析占位符为真实的值
 		String resolvedValue = this.valueResolver.resolveStringValue(strVal);
+		// 如果没有修改，返回原始字符串。
 		// Return original String if not modified.
 		return (strVal.equals(resolvedValue) ? strVal : resolvedValue);
 	}

@@ -74,6 +74,7 @@ public abstract class PropertiesLoaderUtils {
 	}
 
 	/**
+	 * 实际上将属性从给定的EncodedResource加载到给定的属性实例中。
 	 * Actually load properties from the given EncodedResource into the given Properties instance.
 	 * @param props the Properties instance to load into
 	 * @param resource the resource to load from

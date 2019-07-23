@@ -45,12 +45,12 @@ public abstract class PropertiesLoaderSupport {
 
 	@Nullable
 	protected Properties[] localProperties;
-
+	// 是否让本地属性覆盖配置文件的属性
 	protected boolean localOverride = false;
 
 	@Nullable
 	private Resource[] locations;
-
+	// 是否忽略资源找不到的异常
 	private boolean ignoreResourceNotFound = false;
 
 	@Nullable
@@ -140,24 +140,28 @@ public abstract class PropertiesLoaderSupport {
 
 
 	/**
+	 * 返回一个合并的属性实例，其中包含加载的属性和这个FactoryBean上已经设置的属性。
 	 * Return a merged Properties instance containing both the
 	 * loaded properties and properties set on this FactoryBean.
 	 */
 	protected Properties mergeProperties() throws IOException {
 		Properties result = new Properties();
-
+		// 让本地属性覆盖配置文件，就先读取配置文件
 		if (this.localOverride) {
+			// 预先从文件加载属性，让本地属性覆盖。
 			// Load properties from file upfront, to let local properties override.
 			loadProperties(result);
 		}
-
+		// 有配置文件
 		if (this.localProperties != null) {
 			for (Properties localProp : this.localProperties) {
+				// 将已经加载过的属性键值对进行合并
 				CollectionUtils.mergePropertiesIntoMap(localProp, result);
 			}
 		}
-
+		// 让配置文件覆盖本地属性，就后读取配置文件
 		if (!this.localOverride) {
+			// 后从文件中加载属性，让这些属性覆盖。
 			// Load properties from file afterwards, to let those properties override.
 			loadProperties(result);
 		}
@@ -166,18 +170,21 @@ public abstract class PropertiesLoaderSupport {
 	}
 
 	/**
+	 * 将属性加载到给定实例中。
 	 * Load properties into the given instance.
 	 * @param props the Properties instance to load into
 	 * @throws IOException in case of I/O errors
 	 * @see #setLocations
 	 */
 	protected void loadProperties(Properties props) throws IOException {
+		// 如果有资源文件
 		if (this.locations != null) {
 			for (Resource location : this.locations) {
 				if (logger.isTraceEnabled()) {
 					logger.trace("Loading properties file from " + location);
 				}
 				try {
+					// 读取配置文件
 					PropertiesLoaderUtils.fillProperties(
 							props, new EncodedResource(location, this.fileEncoding), this.propertiesPersister);
 				}

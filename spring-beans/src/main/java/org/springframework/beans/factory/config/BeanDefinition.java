@@ -220,6 +220,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	ConstructorArgumentValues getConstructorArgumentValues();
 
 	/**
+	 * 这个BeanDefinition是否定义了构造函数的参数
 	 * Return if there are constructor argument values defined for this bean.
 	 * @since 5.0.2
 	 */
@@ -235,6 +236,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	MutablePropertyValues getPropertyValues();
 
 	/**
+	 * 返回为该bean定义的属性值。
 	 * Return if there are property values values defined for this bean.
 	 * @since 5.0.2
 	 */

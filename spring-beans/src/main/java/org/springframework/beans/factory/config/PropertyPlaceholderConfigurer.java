@@ -28,12 +28,16 @@ import org.springframework.util.PropertyPlaceholderHelper.PlaceholderResolver;
 import org.springframework.util.StringValueResolver;
 
 /**
+ * TODO 解析${...}占位符，可以从properties文件、系统变量、环境变量中解析出值
+ * TODO 继承这个方法，可以自定义实现配置文件加载，可以自定义添加处理逻辑比如加解密，动态属性
+ * 这个类实现了BeanFactoryPostProcessor和Aware接口，可以被上下文感知到并且获得增强bean的能力
  * {@link PlaceholderConfigurerSupport} subclass that resolves ${...} placeholders against
  * {@link #setLocation local} {@link #setProperties properties} and/or system properties
  * and environment variables.
- *
+ * 仍适用于以下情况
  * <p>{@link PropertyPlaceholderConfigurer} is still appropriate for use when:
  * <ul>
+ * spring-context模块不可用，比如一个使用BeanFactory而没有使用ApplicationContext的API
  * <li>the {@code spring-context} module is not available (i.e., one is using Spring's
  * {@code BeanFactory} API as opposed to {@code ApplicationContext}).
  * <li>existing configuration makes use of the {@link #setSystemPropertiesMode(int) "systemPropertiesMode"}
@@ -200,13 +204,14 @@ public class PropertyPlaceholderConfigurer extends PlaceholderConfigurerSupport 
 
 
 	/**
+	 * 访问给定BeanFactory中的每个bean definition，并尝试替换${…}属性占位符，其中包含来自给定属性的值。
 	 * Visit each bean definition in the given bean factory and attempt to replace ${...} property
 	 * placeholders with values from the given properties.
 	 */
 	@Override
 	protected void processProperties(ConfigurableListableBeanFactory beanFactoryToProcess, Properties props)
 			throws BeansException {
-
+		// 创建一个解析String类型的策略接口
 		StringValueResolver valueResolver = new PlaceholderResolvingStringValueResolver(props);
 		doProcessProperties(beanFactoryToProcess, valueResolver);
 	}
@@ -227,10 +232,13 @@ public class PropertyPlaceholderConfigurer extends PlaceholderConfigurerSupport 
 		@Override
 		@Nullable
 		public String resolveStringValue(String strVal) throws BeansException {
+			// 将属性值解析为真实的值
 			String resolved = this.helper.replacePlaceholders(strVal, this.resolver);
+			// 判断是否需要去除空格
 			if (trimValues) {
 				resolved = resolved.trim();
 			}
+			// 返回解析后的最终值
 			return (resolved.equals(nullValue) ? null : resolved);
 		}
 	}
