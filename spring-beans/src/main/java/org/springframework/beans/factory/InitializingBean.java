@@ -17,6 +17,7 @@
 package org.springframework.beans.factory;
 
 /**
+ * 该接口由bean自己实现，将会在bean设置完所有属性之后触发
  * Interface to be implemented by beans that need to react once all their properties
  * have been set by a {@link BeanFactory}: e.g. to perform custom initialization,
  * or merely to check that all mandatory properties have been set.
@@ -34,8 +35,10 @@ package org.springframework.beans.factory;
 public interface InitializingBean {
 
 	/**
+	 * 当BeanFactory设置完Bean所有属性，调用aware和beanPostProcessor接口之前，进行调用
 	 * Invoked by the containing {@code BeanFactory} after it has set all bean properties
 	 * and satisfied {@link BeanFactoryAware}, {@code ApplicationContextAware} etc.
+	 * 这个方法允许bean在所有属性犬舍设置好之后，或者初始化时发生的其他原因失败时，执行自定义的配置验证和最终初始化
 	 * <p>This method allows the bean instance to perform validation of its overall
 	 * configuration and final initialization when all bean properties have been set.
 	 * @throws Exception in the event of misconfiguration (such as failure to set an
