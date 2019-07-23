@@ -69,6 +69,9 @@ abstract class AutowireUtils {
 	}
 
 	/**
+	 * 排序给定的工厂方法，选择公共方法和参数最多的“贪婪”方法。
+	 * 结果将首先包含公共方法，减少参数的数量，
+	 * 然后是非公共方法，再次减少参数的数量。
 	 * Sort the given factory methods, preferring public methods and "greedy" ones
 	 * with a maximum of arguments. The result will contain public methods first,
 	 * with decreasing number of arguments, then non-public methods, again with

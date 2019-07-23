@@ -61,7 +61,7 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	private AnnotatedElement qualifiedElement;
 
 	boolean allowCaching = true;
-
+	//是否已经指定引用非重载方法的工厂方法名。
 	boolean isFactoryMethodUnique = false;
 
 	@Nullable
@@ -99,10 +99,10 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/** Common lock for the two post-processing fields below. */
 	final Object postProcessingLock = new Object();
-
+	// 是否应用了MergedBeanDefinitionPostProcessor
 	/** Package-visible field that indicates MergedBeanDefinitionPostProcessor having been applied. */
 	boolean postProcessed = false;
-
+	// bean创建前置前置后置处理器是否启动
 	/** Package-visible field that indicates a before-instantiation post-processor having kicked in. */
 	@Nullable
 	volatile Boolean beforeInstantiationResolved;
