@@ -17,6 +17,7 @@
 package org.springframework.core.convert.converter;
 
 /**
+ * 一个工厂的“范围”转换器，可以转换对象从S到子类型的R。
  * A factory for "ranged" converters that can convert objects from S to subtypes of R.
  *
  * <p>Implementations may additionally implement {@link ConditionalConverter}.

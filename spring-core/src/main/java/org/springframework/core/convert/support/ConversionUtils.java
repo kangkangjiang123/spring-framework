@@ -38,6 +38,7 @@ abstract class ConversionUtils {
 			TypeDescriptor sourceType, TypeDescriptor targetType) {
 
 		try {
+			// 通过GenericConverter进行类型转换，有很多具体的实现，负责各种类型直接的相互转换
 			return converter.convert(source, sourceType, targetType);
 		}
 		catch (ConversionFailedException ex) {

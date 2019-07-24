@@ -40,6 +40,7 @@ public final class ConversionServiceFactory {
 
 
 	/**
+	 * 用给定的目标ConverterRegistry注册给定的转换器对象。
 	 * Register the given Converter objects with the given target ConverterRegistry.
 	 * @param converters the converter objects: implementing {@link Converter},
 	 * {@link ConverterFactory}, or {@link GenericConverter}
@@ -47,6 +48,7 @@ public final class ConversionServiceFactory {
 	 */
 	public static void registerConverters(@Nullable Set<?> converters, ConverterRegistry registry) {
 		if (converters != null) {
+			// 遍历所有的converters并注册
 			for (Object converter : converters) {
 				if (converter instanceof GenericConverter) {
 					registry.addConverter((GenericConverter) converter);

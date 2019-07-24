@@ -1806,18 +1806,22 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 转换指定目标属性的给定值。
 	 * Convert the given value for the specified target property.
 	 */
 	@Nullable
 	private Object convertForProperty(
 			@Nullable Object value, String propertyName, BeanWrapper bw, TypeConverter converter) {
-
+		// 如果是BeanWrapperImpl类型的转换器，则转换为BeanWrapperImpl类型并使用它来进行属性转换
 		if (converter instanceof BeanWrapperImpl) {
 			return ((BeanWrapperImpl) converter).convertForProperty(value, propertyName);
 		}
 		else {
+			// 获得该属性对应的PropertyDescriptor对象
 			PropertyDescriptor pd = bw.getPropertyDescriptor(propertyName);
+			// 获得该属性的set方法
 			MethodParameter methodParam = BeanUtils.getWriteMethodParameter(pd);
+			// 调用set方法进行属性转换
 			return converter.convertIfNecessary(value, pd.getPropertyType(), methodParam);
 		}
 	}
