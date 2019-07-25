@@ -21,6 +21,7 @@ import java.beans.PropertyEditor;
 import org.springframework.lang.Nullable;
 
 /**
+ * 封装用于注册javaBean PropertyEditors对象的方法（一个jdk自带用于设置属性值的bean的对象）
  * Encapsulates methods for registering JavaBeans {@link PropertyEditor PropertyEditors}.
  * This is the central interface that a {@link PropertyEditorRegistrar} operates on.
  *
@@ -37,6 +38,7 @@ import org.springframework.lang.Nullable;
 public interface PropertyEditorRegistry {
 
 	/**
+	 * 注册一个属性编辑器
 	 * Register the given custom property editor for all properties of the given type.
 	 * @param requiredType the type of the property
 	 * @param propertyEditor the editor to register

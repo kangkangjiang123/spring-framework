@@ -25,9 +25,11 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
+ * method override的扩展，表示IOC容器对方法的任意重写。
  * Extension of MethodOverride that represents an arbitrary
  * override of a method by the IoC container.
  *
+ * 任何非final方法都可以被重写，不管它的参数和返回类型如何。
  * <p>Any non-final method can be overridden, irrespective of its
  * parameters and return types.
  *
@@ -55,6 +57,7 @@ public class ReplaceOverride extends MethodOverride {
 
 
 	/**
+	 * 返回bean实现方法replacer的名称
 	 * Return the name of the bean implementing MethodReplacer.
 	 */
 	public String getMethodReplacerBeanName() {
@@ -62,6 +65,7 @@ public class ReplaceOverride extends MethodOverride {
 	}
 
 	/**
+	 * 添加一个类字符串的片段，如“异常”*\或“java. Lang.Exc”，以标识参数类型
 	 * Add a fragment of a class string, like "Exception"
 	 * or "java.lang.Exc", to identify a parameter type.
 	 * @param identifier a substring of the fully qualified class name
@@ -76,9 +80,11 @@ public class ReplaceOverride extends MethodOverride {
 			return false;
 		}
 		if (!isOverloaded()) {
+			// 不重载：不要担心arg类型匹配…
 			// Not overloaded: don't worry about arg type matching...
 			return true;
 		}
+		// 如果我们到了这里，我们需要坚持精确的参数匹配…
 		// If we get here, we need to insist on precise argument matching...
 		if (this.typeIdentifiers.size() != method.getParameterCount()) {
 			return false;

@@ -24,8 +24,9 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.lang.Nullable;
 
 /**
+ * 负责创建root bean definition对应的实例的接口。
  * Interface responsible for creating instances corresponding to a root bean definition.
- *
+ * 随着各种方法的可能，采用了策略模式实现，包括使用cglib动态创建子类以支持方法注入。
  * <p>This is pulled out into a strategy as various approaches are possible,
  * including using CGLIB to create subclasses on the fly to support Method Injection.
  *
@@ -36,6 +37,7 @@ import org.springframework.lang.Nullable;
 public interface InstantiationStrategy {
 
 	/**
+	 * 用指定的名字从Bean Factory中返回对应的实例
 	 * Return an instance of the bean with the given name in this factory.
 	 * @param bd the bean definition
 	 * @param beanName the name of the bean when it is created in this context.
@@ -49,6 +51,7 @@ public interface InstantiationStrategy {
 			throws BeansException;
 
 	/**
+	 * 用指定的名字从Bean Factory中返回对应的实例，并通过构造方法进行创建
 	 * Return an instance of the bean with the given name in this factory,
 	 * creating it via the given constructor.
 	 * @param bd the bean definition
@@ -65,6 +68,7 @@ public interface InstantiationStrategy {
 			Constructor<?> ctor, Object... args) throws BeansException;
 
 	/**
+	 * 用指定的名字从Bean Factory中返回对应的实例，并通过工厂方法进行创建
 	 * Return an instance of the bean with the given name in this factory,
 	 * creating it via the given factory method.
 	 * @param bd the bean definition

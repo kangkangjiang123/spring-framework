@@ -23,8 +23,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 
 /**
+ * 表示在同一IOC上下文中查找对象的方法的重写
  * Represents an override of a method that looks up an object in the same IoC context.
  *
+ * 符合查找重写条件的方法不能有参数
  * <p>Methods eligible for lookup override must not have arguments.
  *
  * @author Rod Johnson
@@ -65,6 +67,7 @@ public class LookupOverride extends MethodOverride {
 
 
 	/**
+	 * 返回此方法应返回的bean的名称。
 	 * Return the name of the bean that should be returned by this method.
 	 */
 	@Nullable
@@ -73,7 +76,10 @@ public class LookupOverride extends MethodOverride {
 	}
 
 	/**
+	 * 通过method引用或方法名称匹配指定的方法
 	 * Match the specified method by {@link Method} reference or method name.
+	 * 由于向后兼容的原因，在具有给定名称的重载非抽象方法的场景中，
+	 * 只有没有参数的方法会变成容器驱动查找方法。
 	 * <p>For backwards compatibility reasons, in a scenario with overloaded
 	 * non-abstract methods of the given name, only the no-arg variant of a
 	 * method will be turned into a container-driven lookup method.
@@ -87,7 +93,10 @@ public class LookupOverride extends MethodOverride {
 		}
 		else {
 			return (method.getName().equals(getMethodName()) && (!isOverloaded() ||
-					Modifier.isAbstract(method.getModifiers()) || method.getParameterCount() == 0));
+					// 是抽象方法
+					Modifier.isAbstract(method.getModifiers()) ||
+					// 没有参数
+					method.getParameterCount() == 0));
 		}
 	}
 
