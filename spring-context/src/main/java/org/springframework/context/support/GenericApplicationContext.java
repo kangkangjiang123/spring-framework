@@ -40,6 +40,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
+ * 通常是委托包含在内的DefaultListableBeanFactory来使用的
  * Generic ApplicationContext implementation that holds a single internal
  * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory}
  * instance and does not assume a specific bean definition format. Implements
@@ -319,17 +320,19 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 	@Override
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {
-
+		// 通过委托内置的DefaultListableBeanFactory来注册
 		this.beanFactory.registerBeanDefinition(beanName, beanDefinition);
 	}
 
 	@Override
 	public void removeBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
+		// 通过委托内置的DefaultListableBeanFactory来移除
 		this.beanFactory.removeBeanDefinition(beanName);
 	}
 
 	@Override
 	public BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
+		// 通过委托内置的DefaultListableBeanFactory来获取
 		return this.beanFactory.getBeanDefinition(beanName);
 	}
 
