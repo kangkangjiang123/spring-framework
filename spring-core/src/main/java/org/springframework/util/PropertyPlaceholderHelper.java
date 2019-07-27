@@ -28,6 +28,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.lang.Nullable;
 
 /**
+ * 用于处理包含占位符值的字符串的实用程序类。占位符采用${name}
+ * 使用PropertyPlaceholderHelper用来替换占位符,改写为用户提供的值。properties实例或PlaceholderResolver提供替换值。
  * Utility class for working with Strings that have placeholder values in them. A placeholder takes the form
  * {@code ${name}}. Using {@code PropertyPlaceholderHelper} these placeholders can be substituted for
  * user-supplied values. <p> Values for substitution can be supplied using a {@link Properties} instance or
@@ -63,6 +65,7 @@ public class PropertyPlaceholderHelper {
 
 
 	/**
+	 * 提供前缀和后缀格式，不可解析的值将被忽略
 	 * Creates a new {@code PropertyPlaceholderHelper} that uses the supplied prefix and suffix.
 	 * Unresolvable placeholders are ignored.
 	 * @param placeholderPrefix the prefix that denotes the start of a placeholder
@@ -73,6 +76,7 @@ public class PropertyPlaceholderHelper {
 	}
 
 	/**
+	 * 提供前缀和后缀格式
 	 * Creates a new {@code PropertyPlaceholderHelper} that uses the supplied prefix and suffix.
 	 * @param placeholderPrefix the prefix that denotes the start of a placeholder
 	 * @param placeholderSuffix the suffix that denotes the end of a placeholder
@@ -101,6 +105,7 @@ public class PropertyPlaceholderHelper {
 
 
 	/**
+	 * 将占位符替换成属性
 	 * Replaces all placeholders of format {@code ${name}} with the corresponding
 	 * property from the supplied {@link Properties}.
 	 * @param value the value containing the placeholders to be replaced

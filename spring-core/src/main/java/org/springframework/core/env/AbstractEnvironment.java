@@ -34,6 +34,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * 默认的环境实现，支持默认配置文件和指定环境的配置文件
  * Abstract base class for {@link Environment} implementations. Supports the notion of
  * reserved default profile names and enables specifying active and default profiles
  * through the {@link #ACTIVE_PROFILES_PROPERTY_NAME} and
@@ -55,6 +56,7 @@ import org.springframework.util.StringUtils;
 public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 
 	/**
+	 * 让Spring忽略系统环境变量system.getenv（）获取变量
 	 * System property that instructs Spring to ignore system environment variables,
 	 * i.e. to never attempt to retrieve such a variable via {@link System#getenv()}.
 	 * <p>The default is "false", falling back to system environment variable checks if a
@@ -67,6 +69,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	public static final String IGNORE_GETENV_PROPERTY_NAME = "spring.getenv.ignore";
 
 	/**
+	 * 指定开启的环境
 	 * Name of property to set to specify active profiles: {@value}. Value may be comma
 	 * delimited.
 	 * <p>Note that certain shell environments such as Bash disallow the use of the period
@@ -78,6 +81,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	public static final String ACTIVE_PROFILES_PROPERTY_NAME = "spring.profiles.active";
 
 	/**
+	 * 指定默认的环境
 	 * Name of property to set to specify profiles active by default: {@value}. Value may
 	 * be comma delimited.
 	 * <p>Note that certain shell environments such as Bash disallow the use of the period
@@ -89,6 +93,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	public static final String DEFAULT_PROFILES_PROPERTY_NAME = "spring.profiles.default";
 
 	/**
+	 * 默认配置文件名
 	 * Name of reserved default profile name: {@value}. If no default profile names are
 	 * explicitly and no active profile names are explicitly set, this profile will
 	 * automatically be activated by default.
@@ -204,6 +209,8 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	}
 
 	/**
+	 * 返回一组保留的默认配置文件名。此实现返回reserved_default_profile_name。
+	 * 子类可以重写，以便自定义名称集合。
 	 * Return the set of reserved default profile names. This implementation returns
 	 * {@value #RESERVED_DEFAULT_PROFILE_NAME}. Subclasses may override in order to
 	 * customize the set of reserved names.
@@ -225,6 +232,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	}
 
 	/**
+	 * 返回当前启动的配置文件集合
 	 * Return the set of active profiles as explicitly set through
 	 * {@link #setActiveProfiles} or if the current set of active profiles
 	 * is empty, check for the presence of the {@value #ACTIVE_PROFILES_PROPERTY_NAME}
@@ -235,8 +243,10 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	protected Set<String> doGetActiveProfiles() {
 		synchronized (this.activeProfiles) {
 			if (this.activeProfiles.isEmpty()) {
+				// 如果当前还没有设置，就根据当前的环境进行获取
 				String profiles = getProperty(ACTIVE_PROFILES_PROPERTY_NAME);
 				if (StringUtils.hasText(profiles)) {
+					// 设置当前环境的配置文件
 					setActiveProfiles(StringUtils.commaDelimitedListToStringArray(
 							StringUtils.trimAllWhitespace(profiles)));
 				}
@@ -252,6 +262,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 			logger.debug("Activating profiles " + Arrays.asList(profiles));
 		}
 		synchronized (this.activeProfiles) {
+			// 清空并设置当前环境的配置文件
 			this.activeProfiles.clear();
 			for (String profile : profiles) {
 				validateProfile(profile);
@@ -268,6 +279,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 		validateProfile(profile);
 		doGetActiveProfiles();
 		synchronized (this.activeProfiles) {
+			// 添加当前环境的配置文件
 			this.activeProfiles.add(profile);
 		}
 	}
@@ -279,6 +291,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	}
 
 	/**
+	 * 获取默认的配置文件
 	 * Return the set of default profiles explicitly set via
 	 * {@link #setDefaultProfiles(String...)} or if the current set of default profiles
 	 * consists only of {@linkplain #getReservedDefaultProfiles() reserved default
@@ -293,6 +306,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	protected Set<String> doGetDefaultProfiles() {
 		synchronized (this.defaultProfiles) {
 			if (this.defaultProfiles.equals(getReservedDefaultProfiles())) {
+				//	获取默认的配置文件，并设置到缓存
 				String profiles = getProperty(DEFAULT_PROFILES_PROPERTY_NAME);
 				if (StringUtils.hasText(profiles)) {
 					setDefaultProfiles(StringUtils.commaDelimitedListToStringArray(
@@ -304,6 +318,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	}
 
 	/**
+	 * 设置默认的配置文件
 	 * Specify the set of profiles to be made active by default if no other profiles
 	 * are explicitly made active through {@link #setActiveProfiles}.
 	 * <p>Calling this method removes overrides any reserved default profiles
@@ -315,6 +330,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	public void setDefaultProfiles(String... profiles) {
 		Assert.notNull(profiles, "Profile array must not be null");
 		synchronized (this.defaultProfiles) {
+			//	清空并设置默认配置
 			this.defaultProfiles.clear();
 			for (String profile : profiles) {
 				validateProfile(profile);
@@ -343,10 +359,12 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	@Override
 	public boolean acceptsProfiles(Profiles profiles) {
 		Assert.notNull(profiles, "Profiles must not be null");
+		//	检查当前配置文件是否在此环境中激活
 		return profiles.matches(this::isProfileActive);
 	}
 
 	/**
+	 * 返回配置文件是否在激活状态
 	 * Return whether the given profile is active, or if active profiles are empty
 	 * whether the profile should be active by default.
 	 * @throws IllegalArgumentException per {@link #validateProfile(String)}
@@ -359,6 +377,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	}
 
 	/**
+	 * 在将给定的配置文件添加到环境配置文件集合或者默认配置文件集合前，进行检查
 	 * Validate the given profile, called internally prior to adding to the set of
 	 * active or default profiles.
 	 * <p>Subclasses may override to impose further restrictions on profile syntax.
@@ -451,7 +470,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	protected boolean suppressGetenvAccess() {
 		return SpringProperties.getFlag(IGNORE_GETENV_PROPERTY_NAME);
 	}
-
+	//	合并父环境的配置、当前环境配置、默认环境配置
 	@Override
 	public void merge(ConfigurableEnvironment parent) {
 		for (PropertySource<?> ps : parent.getPropertySources()) {

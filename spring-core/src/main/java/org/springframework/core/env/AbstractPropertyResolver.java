@@ -32,6 +32,7 @@ import org.springframework.util.PropertyPlaceholderHelper;
 import org.springframework.util.SystemPropertyUtils;
 
 /**
+ * 用于解析配置文件
  * Abstract base class for resolving properties against any underlying source.
  *
  * @author Chris Beams
@@ -41,7 +42,7 @@ import org.springframework.util.SystemPropertyUtils;
 public abstract class AbstractPropertyResolver implements ConfigurablePropertyResolver {
 
 	protected final Log logger = LogFactory.getLog(getClass());
-
+	//	类型装换服务
 	@Nullable
 	private volatile ConfigurableConversionService conversionService;
 
@@ -50,21 +51,23 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 
 	@Nullable
 	private PropertyPlaceholderHelper strictHelper;
-
+	//	无法解析是否抛出异常
 	private boolean ignoreUnresolvableNestedPlaceholders = false;
-
+	//	占位符前缀
 	private String placeholderPrefix = SystemPropertyUtils.PLACEHOLDER_PREFIX;
-
+	//	占位符后缀
 	private String placeholderSuffix = SystemPropertyUtils.PLACEHOLDER_SUFFIX;
-
+	// 分隔符
 	@Nullable
 	private String valueSeparator = SystemPropertyUtils.VALUE_SEPARATOR;
-
+	// 必须要存在的属性
 	private final Set<String> requiredProperties = new LinkedHashSet<>();
 
 
 	@Override
 	public ConfigurableConversionService getConversionService() {
+		// 需要提供独立的DefaultConversionService，
+		// PropertySourcesPropertyResolver里共享的DefaultConversionService。
 		// Need to provide an independent DefaultConversionService, not the
 		// shared DefaultConversionService used by PropertySourcesPropertyResolver.
 		ConfigurableConversionService cs = this.conversionService;
@@ -72,6 +75,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 			synchronized (this) {
 				cs = this.conversionService;
 				if (cs == null) {
+					// 如果不指定ConversionService就会用默认的ConversionService，但是不要这么使用
 					cs = new DefaultConversionService();
 					this.conversionService = cs;
 				}
@@ -79,7 +83,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		}
 		return cs;
 	}
-
+	// 获取ConversionService
 	@Override
 	public void setConversionService(ConfigurableConversionService conversionService) {
 		Assert.notNull(conversionService, "ConversionService must not be null");
@@ -87,6 +91,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	}
 
 	/**
+	 * 设置占位符前缀，默认是${
 	 * Set the prefix that placeholders replaced by this resolver must begin with.
 	 * <p>The default is "${".
 	 * @see org.springframework.util.SystemPropertyUtils#PLACEHOLDER_PREFIX
@@ -98,6 +103,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	}
 
 	/**
+	 * 设置占位符后缀，默认是}
 	 * Set the suffix that placeholders replaced by this resolver must end with.
 	 * <p>The default is "}".
 	 * @see org.springframework.util.SystemPropertyUtils#PLACEHOLDER_SUFFIX
@@ -109,6 +115,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	}
 
 	/**
+	 * 设置分隔符，默认是:
 	 * Specify the separating character between the placeholders replaced by this
 	 * resolver and their associated default value, or {@code null} if no such
 	 * special character should be processed as a value separator.
@@ -121,6 +128,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	}
 
 	/**
+	 * 设置占位符无法解析时是否抛出异常
 	 * Set whether to throw an exception when encountering an unresolvable placeholder
 	 * nested within the value of a given property. A {@code false} value indicates strict
 	 * resolution, i.e. that an exception will be thrown. A {@code true} value indicates
@@ -133,14 +141,14 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	public void setIgnoreUnresolvableNestedPlaceholders(boolean ignoreUnresolvableNestedPlaceholders) {
 		this.ignoreUnresolvableNestedPlaceholders = ignoreUnresolvableNestedPlaceholders;
 	}
-
+	//	设置必须存在的属性并由validateRequiredProperties进行校验
 	@Override
 	public void setRequiredProperties(String... requiredProperties) {
 		for (String key : requiredProperties) {
 			this.requiredProperties.add(key);
 		}
 	}
-
+	//	校验必须存在的属性是否都能解析
 	@Override
 	public void validateRequiredProperties() {
 		MissingRequiredPropertiesException ex = new MissingRequiredPropertiesException();
@@ -153,30 +161,30 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 			throw ex;
 		}
 	}
-
+	// 是否包含这个key
 	@Override
 	public boolean containsProperty(String key) {
 		return (getProperty(key) != null);
 	}
-
+	// 通过key进行解析
 	@Override
 	@Nullable
 	public String getProperty(String key) {
 		return getProperty(key, String.class);
 	}
-
+	// 通过key进行解析并提供无法解析时返回的默认值
 	@Override
 	public String getProperty(String key, String defaultValue) {
 		String value = getProperty(key);
 		return (value != null ? value : defaultValue);
 	}
-
+	// 通过key进行解析并提供返回类型和无法解析时返回的默认值
 	@Override
 	public <T> T getProperty(String key, Class<T> targetType, T defaultValue) {
 		T value = getProperty(key, targetType);
 		return (value != null ? value : defaultValue);
 	}
-
+	// 通过key进行解析并在无法解析时发生异常
 	@Override
 	public String getRequiredProperty(String key) throws IllegalStateException {
 		String value = getProperty(key);
@@ -185,7 +193,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		}
 		return value;
 	}
-
+	// 通过key进行解析并在无法解析时发生异常并提供返回类型
 	@Override
 	public <T> T getRequiredProperty(String key, Class<T> valueType) throws IllegalStateException {
 		T value = getProperty(key, valueType);
@@ -194,7 +202,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		}
 		return value;
 	}
-
+	//	解析属性
 	@Override
 	public String resolvePlaceholders(String text) {
 		if (this.nonStrictHelper == null) {
@@ -202,7 +210,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		}
 		return doResolvePlaceholders(text, this.nonStrictHelper);
 	}
-
+	// 解析属性，在无法解析的时候抛出异常
 	@Override
 	public String resolveRequiredPlaceholders(String text) throws IllegalArgumentException {
 		if (this.strictHelper == null) {
@@ -212,6 +220,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	}
 
 	/**
+	 * 解析占位符。推迟到设置完是否抛出解析异常之后进行，避免解析不到属性
 	 * Resolve placeholders within the given string, deferring to the value of
 	 * {@link #setIgnoreUnresolvableNestedPlaceholders} to determine whether any
 	 * unresolvable placeholders should raise an exception or be ignored.
@@ -238,6 +247,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	}
 
 	/**
+	 * 如有必要，将给定值转换为指定的目标类型。
 	 * Convert the given value to the specified target type, if necessary.
 	 * @param value the original property value
 	 * @param targetType the specified target type for property retrieval
@@ -265,6 +275,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 
 
 	/**
+	 * 以原始字符串的形式检索指定的属性，即不解析嵌套的占位符。
 	 * Retrieve the specified property as a raw String,
 	 * i.e. without resolution of nested placeholders.
 	 * @param key the property name to resolve

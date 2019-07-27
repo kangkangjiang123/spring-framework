@@ -19,6 +19,7 @@ package org.springframework.core.env;
 import java.util.Map;
 
 /**
+ * 提供了环境和配置的双重功能
  * Configuration interface to be implemented by most if not all {@link Environment} types.
  * Provides facilities for setting active and default profiles and manipulating underlying
  * property sources. Allows clients to set and validate required properties, customize the
@@ -72,6 +73,7 @@ import java.util.Map;
 public interface ConfigurableEnvironment extends Environment, ConfigurablePropertyResolver {
 
 	/**
+	 * 指定该环境下的配置文件集合
 	 * Specify the set of profiles active for this {@code Environment}. Profiles are
 	 * evaluated during container bootstrap to determine whether bean definitions
 	 * should be registered with the container.
@@ -87,6 +89,7 @@ public interface ConfigurableEnvironment extends Environment, ConfigurableProper
 	void setActiveProfiles(String... profiles);
 
 	/**
+	 * 添加该环境下的配置文件
 	 * Add a profile to the current set of active profiles.
 	 * @throws IllegalArgumentException if the profile is null, empty or whitespace-only
 	 * @see #setActiveProfiles
@@ -94,6 +97,7 @@ public interface ConfigurableEnvironment extends Environment, ConfigurableProper
 	void addActiveProfile(String profile);
 
 	/**
+	 * 指定默认环境下的配置文件集合
 	 * Specify the set of profiles to be made active by default if no other profiles
 	 * are explicitly made active through {@link #setActiveProfiles}.
 	 * @throws IllegalArgumentException if any profile is null, empty or whitespace-only
@@ -102,6 +106,7 @@ public interface ConfigurableEnvironment extends Environment, ConfigurableProper
 	void setDefaultProfiles(String... profiles);
 
 	/**
+	 * 获取该环境下的配置文件集合
 	 * Return the {@link PropertySources} for this {@code Environment} in mutable form,
 	 * allowing for manipulation of the set of {@link PropertySource} objects that should
 	 * be searched when resolving properties against this {@code Environment} object.
@@ -119,6 +124,7 @@ public interface ConfigurableEnvironment extends Environment, ConfigurableProper
 	MutablePropertySources getPropertySources();
 
 	/**
+	 * 获取当前系统属性
 	 * Return the value of {@link System#getProperties()} if allowed by the current
 	 * {@link SecurityManager}, otherwise return a map implementation that will attempt
 	 * to access individual keys using calls to {@link System#getProperty(String)}.
@@ -134,6 +140,7 @@ public interface ConfigurableEnvironment extends Environment, ConfigurableProper
 	Map<String, Object> getSystemProperties();
 
 	/**
+	 * 返回系统环境属性
 	 * Return the value of {@link System#getenv()} if allowed by the current
 	 * {@link SecurityManager}, otherwise return a map implementation that will attempt
 	 * to access individual keys using calls to {@link System#getenv(String)}.
@@ -149,6 +156,7 @@ public interface ConfigurableEnvironment extends Environment, ConfigurableProper
 	Map<String, Object> getSystemEnvironment();
 
 	/**
+	 * 将父环境配置文件、默认配置文件合并到子环境配置文件中
 	 * Append the given parent environment's active profiles, default profiles and
 	 * property sources to this (child) environment's respective collections of each.
 	 * <p>For any identically-named {@code PropertySource} instance existing in both
