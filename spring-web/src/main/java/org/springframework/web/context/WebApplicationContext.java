@@ -22,6 +22,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.lang.Nullable;
 
 /**
+ * 为web application提供的接口，在环境运行的过程中只能是可读的
  * Interface to provide configuration for a web application. This is read-only while
  * the application is running, but may be reloaded if the implementation supports this.
  *
@@ -45,6 +46,7 @@ import org.springframework.lang.Nullable;
 public interface WebApplicationContext extends ApplicationContext {
 
 	/**
+	 * 用于在成功启动时将 root WebApplicationContext绑定到的Context属性。
 	 * Context attribute to bind root WebApplicationContext to on successful startup.
 	 * <p>Note: If the startup of the root context fails, this attribute can contain
 	 * an exception or error as value. Use WebApplicationContextUtils for convenient
@@ -98,6 +100,7 @@ public interface WebApplicationContext extends ApplicationContext {
 
 
 	/**
+	 * 返回这个容器的上下文信息
 	 * Return the standard Servlet API ServletContext for this application.
 	 */
 	@Nullable

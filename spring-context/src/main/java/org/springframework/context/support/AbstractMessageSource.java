@@ -95,6 +95,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 	}
 
 	/**
+	 * 返回与配置无关的公共配置
 	 * Return a Properties object defining locale-independent common messages, if any.
 	 */
 	@Nullable
@@ -124,6 +125,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 	}
 
 	/**
+	 * 返回是否将可以使用默认消息，能用就返回默认消息，不能用需要抛出异常
 	 * Return whether to use the message code as default message instead of
 	 * throwing a NoSuchMessageException. Useful for development and debugging.
 	 * Default is "false".
@@ -138,31 +140,38 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 
 	@Override
 	public final String getMessage(String code, @Nullable Object[] args, @Nullable String defaultMessage, Locale locale) {
+		//	解析消息
 		String msg = getMessageInternal(code, args, locale);
 		if (msg != null) {
 			return msg;
 		}
+		//	没有默认消息并且解析不到，获取默认值
 		if (defaultMessage == null) {
 			return getDefaultMessage(code);
 		}
+		//	解析默认消息并返回
 		return renderDefaultMessage(defaultMessage, args, locale);
 	}
 
 	@Override
 	public final String getMessage(String code, @Nullable Object[] args, Locale locale) throws NoSuchMessageException {
+		//	解析消息
 		String msg = getMessageInternal(code, args, locale);
 		if (msg != null) {
 			return msg;
 		}
+		//	解析不到，获取默认值
 		String fallback = getDefaultMessage(code);
 		if (fallback != null) {
 			return fallback;
 		}
+		//	无法解析抛出异常
 		throw new NoSuchMessageException(code, locale);
 	}
 
 	@Override
 	public final String getMessage(MessageSourceResolvable resolvable, Locale locale) throws NoSuchMessageException {
+		//	解析MessageSourceResolvable里的消息
 		String[] codes = resolvable.getCodes();
 		if (codes != null) {
 			for (String code : codes) {
@@ -172,15 +181,18 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 				}
 			}
 		}
+		//	解析不到，获取默认值
 		String defaultMessage = getDefaultMessage(resolvable, locale);
 		if (defaultMessage != null) {
 			return defaultMessage;
 		}
+		//	无法解析抛出异常
 		throw new NoSuchMessageException(!ObjectUtils.isEmpty(codes) ? codes[codes.length - 1] : "", locale);
 	}
 
 
 	/**
+	 * 解析给定的消息，解析不到返回null
 	 * Resolve the given code and arguments as message in the given Locale,
 	 * returning {@code null} if not found. Does <i>not</i> fall back to
 	 * the code as default message. Invoked by {@code getMessage} methods.
@@ -196,15 +208,18 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 	 */
 	@Nullable
 	protected String getMessageInternal(@Nullable String code, @Nullable Object[] args, @Nullable Locale locale) {
+		// 没消息返回null
 		if (code == null) {
 			return null;
 		}
 		if (locale == null) {
+			// 没有指定查找区域，使用默认的区域
 			locale = Locale.getDefault();
 		}
 		Object[] argsToUse = args;
 
 		if (!isAlwaysUseMessageFormat() && ObjectUtils.isEmpty(args)) {
+			// 没有要解析的参数，因此不需要格式化，注意默认实现仍然使用messageformat，不过可以在特定的子类中重写
 			// Optimized resolution: no arguments to apply,
 			// therefore no MessageFormat needs to be involved.
 			// Note that the default implementation still uses MessageFormat;
@@ -216,6 +231,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 		}
 
 		else {
+			// 先解析参数，用于在父MessageSource定义了消息但是在子类中重写了参数解析的场景
 			// Resolve arguments eagerly, for the case where the message
 			// is defined in a parent MessageSource but resolvable arguments
 			// are defined in the child MessageSource.
@@ -228,7 +244,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 				}
 			}
 		}
-
+		//	获取公共消息并通过公共消息进行解析
 		// Check locale-independent common messages for the given message code.
 		Properties commonMessages = getCommonMessages();
 		if (commonMessages != null) {
@@ -237,7 +253,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 				return formatMessage(commonMessage, args, locale);
 			}
 		}
-
+		// 查不到，从父解析器中解析
 		// Not found -> check parent, if any.
 		return getMessageFromParent(code, argsToUse, locale);
 	}
@@ -303,6 +319,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 	}
 
 	/**
+	 * 返回给定代码的回退默认消息
 	 * Return a fallback default message for the given code, if any.
 	 * <p>Default is to return the code itself if "useCodeAsDefaultMessage" is activated,
 	 * or return no fallback else. In case of no fallback, the caller will usually
@@ -322,6 +339,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 
 
 	/**
+	 * 解析给定的参数数组，返回任何MessageSourceResolvable可以匹配到的对象并解析
 	 * Searches through the given array of objects, finds any MessageSourceResolvable
 	 * objects and resolves them.
 	 * <p>Allows for messages to have MessageSourceResolvables as arguments.
@@ -332,10 +350,12 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 	@Override
 	protected Object[] resolveArguments(@Nullable Object[] args, Locale locale) {
 		if (ObjectUtils.isEmpty(args)) {
+			//从父解析器中进行解析
 			return super.resolveArguments(args, locale);
 		}
 		List<Object> resolvedArgs = new ArrayList<>(args.length);
 		for (Object arg : args) {
+			// 从重写的解析器中解析
 			if (arg instanceof MessageSourceResolvable) {
 				resolvedArgs.add(getMessage((MessageSourceResolvable) arg, locale));
 			}
@@ -347,6 +367,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 	}
 
 	/**
+	 * 子类可以重写此方法，优化解析不带参数的消息，即在不涉及MessageFormat的情况下消息的解析。
 	 * Subclasses can override this method to resolve a message without arguments
 	 * in an optimized fashion, i.e. to resolve without involving a MessageFormat.
 	 * <p>The default implementation <i>does</i> use MessageFormat, through

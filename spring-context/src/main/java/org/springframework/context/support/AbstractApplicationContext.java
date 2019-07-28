@@ -200,7 +200,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/** LifecycleProcessor for managing the lifecycle of beans within this context. */
 	@Nullable
 	private LifecycleProcessor lifecycleProcessor;
-
+	//	将message的参数和国际化委托给messageSource
 	/** MessageSource we delegate our implementation of this interface to. */
 	@Nullable
 	private MessageSource messageSource;
@@ -1305,6 +1305,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
+	 * 返回这个上下文的消息解析器
 	 * Return the internal MessageSource used by the context.
 	 * @return the internal MessageSource (never {@code null})
 	 * @throws IllegalStateException if the context has not been initialized yet

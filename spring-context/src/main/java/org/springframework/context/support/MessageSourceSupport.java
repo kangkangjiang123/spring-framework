@@ -75,6 +75,7 @@ public abstract class MessageSourceSupport {
 	}
 
 	/**
+	 * 返回是否始终应用MessageFormat规则，分析不带参数的消息。
 	 * Return whether to always apply the MessageFormat rules, parsing even
 	 * messages without arguments.
 	 */
@@ -84,6 +85,7 @@ public abstract class MessageSourceSupport {
 
 
 	/**
+	 * 在无法解析是将默认信息进行解析并返回
 	 * Render the given default message String. The default message is
 	 * passed in as specified by the caller and can be rendered into
 	 * a fully formatted default message shown to the user.

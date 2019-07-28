@@ -55,6 +55,12 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.core.io.ResourceLoader
  */
+//EnvironmentCapable 提红了环境功能
+//ListableBeanFactory 提供了获取上下文中所有bean的功能
+//HierarchicalBeanFactory 提供了具有层级关系的上下文功能
+//MessageSource 提供了国际化功能
+//ApplicationEventPublisher 提供事件发布功能
+//ResourcePatternResolver 提供配置文件加载的功能
 public interface ApplicationContext extends EnvironmentCapable, ListableBeanFactory, HierarchicalBeanFactory,
 		MessageSource, ApplicationEventPublisher, ResourcePatternResolver {
 
