@@ -19,6 +19,7 @@ package org.springframework.context.event;
 import org.springframework.context.ApplicationContext;
 
 /**
+ * 关闭上下文的事件
  * Event raised when an {@code ApplicationContext} gets closed.
  *
  * @author Juergen Hoeller

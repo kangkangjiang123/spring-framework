@@ -17,6 +17,7 @@
 package org.springframework.context;
 
 /**
+ * 提供了事件发布的功能
  * Interface that encapsulates event publication functionality.
  *
  * <p>Serves as a super-interface for {@link ApplicationContext}.
@@ -34,6 +35,7 @@ package org.springframework.context;
 public interface ApplicationEventPublisher {
 
 	/**
+	 * 将应用程序事件发布并通知所有该时间的监听器
 	 * Notify all <strong>matching</strong> listeners registered with this
 	 * application of an application event. Events may be framework events
 	 * (such as ContextRefreshedEvent) or application-specific events.
@@ -52,6 +54,7 @@ public interface ApplicationEventPublisher {
 	}
 
 	/**
+	 * 将事件发布并通知所有该时间的监听器
 	 * Notify all <strong>matching</strong> listeners registered with this
 	 * application of an event.
 	 * <p>If the specified {@code event} is not an {@link ApplicationEvent},

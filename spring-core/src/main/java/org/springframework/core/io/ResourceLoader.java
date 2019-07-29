@@ -20,11 +20,14 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ResourceUtils;
 
 /**
+ * 加载资源的策略接口（classPath路径或者文件路径）
  * Strategy interface for loading resources (e.. class path or file system
+ * 需要一个ApplicationContext来提供这个功能，以及扩展ResourcePatternResolver支持
  * resources). An {@link org.springframework.context.ApplicationContext}
  * is required to provide this functionality, plus extended
  * {@link org.springframework.core.io.support.ResourcePatternResolver} support.
  *
+ * DefaultResourceLoader是一个独立的实现，可以在ApplicationContext之外使用，也可以在ResourceEditor使用。
  * <p>{@link DefaultResourceLoader} is a standalone implementation that is
  * usable outside an ApplicationContext, also used by {@link ResourceEditor}.
  *
@@ -40,13 +43,15 @@ import org.springframework.util.ResourceUtils;
  * @see org.springframework.context.ResourceLoaderAware
  */
 public interface ResourceLoader {
-
+	// 用于从类路径加载的伪URL前缀 classpath:
 	/** Pseudo URL prefix for loading from the class path: "classpath:". */
 	String CLASSPATH_URL_PREFIX = ResourceUtils.CLASSPATH_URL_PREFIX;
 
 
 	/**
+	 * 返回指定资源位置的资源句柄
 	 * Return a Resource handle for the specified resource location.
+	 * 句柄应该始终是可重用的资源描述符，允许多个getInputStream（）调用。
 	 * <p>The handle should always be a reusable resource descriptor,
 	 * allowing for multiple {@link Resource#getInputStream()} calls.
 	 * <p><ul>
@@ -56,7 +61,9 @@ public interface ResourceLoader {
 	 * (This will be implementation-specific, typically provided by an
 	 * ApplicationContext implementation.)
 	 * </ul>
+	 * 请注意，资源句柄并不意味着资源存在
 	 * <p>Note that a Resource handle does not imply an existing resource;
+	 * 你需要调用exists方法来检查是否存在
 	 * you need to invoke {@link Resource#exists} to check for existence.
 	 * @param location the resource location
 	 * @return a corresponding Resource handle (never {@code null})
@@ -67,7 +74,9 @@ public interface ResourceLoader {
 	Resource getResource(String location);
 
 	/**
+	 * 公开此资源加载器使用的类加载器
 	 * Expose the ClassLoader used by this ResourceLoader.
+	 * 直接访问类加载器的客户端程序可以以统一的形式进行访问ResourceLoader而不是依赖于线程上下文
 	 * <p>Clients which need to access the ClassLoader directly can do so
 	 * in a uniform manner with the ResourceLoader, rather than relying
 	 * on the thread context ClassLoader.

@@ -85,10 +85,10 @@ public abstract class ResourceUtils {
 
 	/** File extension for a regular jar file: ".jar". */
 	public static final String JAR_FILE_EXTENSION = ".jar";
-
+	// JAR URL和JAR内文件路径之间的分隔符
 	/** Separator between JAR URL and file path within the JAR: "!/". */
 	public static final String JAR_URL_SEPARATOR = "!/";
-
+	// Tomcat上war url和jar部分之间的特殊分隔符
 	/** Special separator between WAR URL and jar part on Tomcat. */
 	public static final String WAR_URL_SEPARATOR = "*/";
 

@@ -17,6 +17,8 @@
 package org.springframework.beans.factory;
 
 /**
+ * TODO 为ApplicationContext提供bean name命名的能力
+ * BeanFactory来设置他们自己想要放置的bean name，不建议对象依赖于BeanName
  * Interface to be implemented by beans that want to be aware of their
  * bean name in a bean factory. Note that it is not usually recommended
  * that an object depends on its bean name, as this represents a potentially
@@ -36,7 +38,9 @@ package org.springframework.beans.factory;
 public interface BeanNameAware extends Aware {
 
 	/**
+	 * 在创建这个bean的bean工厂中设置bean的名称
 	 * Set the name of the bean in the bean factory that created this bean.
+	 * 在普通bean属性填充之后，但在init（比如initializingBean的afterPropertieSet（）或自定义init方法之前调用。
 	 * <p>Invoked after population of normal bean properties but before an
 	 * init callback such as {@link InitializingBean#afterPropertiesSet()}
 	 * or a custom init-method.

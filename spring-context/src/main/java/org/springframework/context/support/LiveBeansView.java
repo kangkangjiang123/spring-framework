@@ -87,14 +87,16 @@ public class LiveBeansView implements LiveBeansViewMBean, ApplicationContextAwar
 			}
 		}
 	}
-
+	//注销上下文和jvmbean
 	static void unregisterApplicationContext(ConfigurableApplicationContext applicationContext) {
 		synchronized (applicationContexts) {
+			// 移除这个上下文
 			if (applicationContexts.remove(applicationContext) && applicationContexts.isEmpty()) {
 				try {
 					MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 					String mbeanDomain = applicationContext.getEnvironment().getProperty(MBEAN_DOMAIN_PROPERTY_NAME);
 					if (mbeanDomain != null) {
+						// 注销所有的jvmbean
 						server.unregisterMBean(new ObjectName(mbeanDomain, MBEAN_APPLICATION_KEY, applicationName));
 					}
 				}

@@ -17,6 +17,9 @@
 package org.springframework.beans.factory;
 
 /**
+ * TODO 提供在自定义属性被BeanFactory设置后作出的自定义功能
+ * TODO 实现此接口可以在容器IOC属性填充完毕之后再次对bean进行手动的维护
+ * 比如执行自定义初始化或者检查必填属性
  * Interface to be implemented by beans that need to react once all their properties
  * have been set by a {@link BeanFactory}: e.g. to perform custom initialization,
  * or merely to check that all mandatory properties have been set.
@@ -34,8 +37,10 @@ package org.springframework.beans.factory;
 public interface InitializingBean {
 
 	/**
+	 * 在BeanFactory设置完了Bean属性而且调用完所有BeanFactoryAware增强后使用
 	 * Invoked by the containing {@code BeanFactory} after it has set all bean properties
 	 * and satisfied {@link BeanFactoryAware}, {@code ApplicationContextAware} etc.
+	 * 此方法允许bean实例在设置了所有bean属性后，对其整体配置和最终初始化进行验证。
 	 * <p>This method allows the bean instance to perform validation of its overall
 	 * configuration and final initialization when all bean properties have been set.
 	 * @throws Exception in the event of misconfiguration (such as failure to set an
