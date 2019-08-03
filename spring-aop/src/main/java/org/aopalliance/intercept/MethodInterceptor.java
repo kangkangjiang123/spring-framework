@@ -17,6 +17,7 @@
 package org.aopalliance.intercept;
 
 /**
+ * 方法拦截，在接口到达目标的过程中截获其调用。并将其在目标的“顶部”。
  * Intercepts calls on an interface on its way to the target. These
  * are nested "on top" of the target.
  *

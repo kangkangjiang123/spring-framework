@@ -19,8 +19,10 @@ package org.springframework.aop;
 import org.aopalliance.aop.Advice;
 
 /**
+ * 包含增强逻辑，能否处理对过滤器
  * Base interface holding AOP <b>advice</b> (action to take at a joinpoint)
  * and a filter determining the applicability of the advice (such as
+ * 这个接口不是供Spring用户使用的，而是允许在支持不同类型的建议时具有通用性。
  * a pointcut). <i>This interface is not for use by Spring users, but to
  * allow for commonality in support for different types of advice.</i>
  *

@@ -35,12 +35,13 @@ public abstract class AbstractExpressionPointcut implements ExpressionPointcut, 
 
 	@Nullable
 	private String location;
-
+	//切入点匹配表达式
 	@Nullable
 	private String expression;
 
 
 	/**
+	 * 这是调试位置
 	 * Set the location for debugging.
 	 */
 	public void setLocation(@Nullable String location) {
@@ -48,7 +49,9 @@ public abstract class AbstractExpressionPointcut implements ExpressionPointcut, 
 	}
 
 	/**
+	 * 返回有关切入点表达式的位置信息（如果可用）
 	 * Return location information about the pointcut expression
+	 * 在debug模式下有用
 	 * if available. This is useful in debugging.
 	 * @return location information as a human-readable String,
 	 * or {@code null} if none is available
@@ -75,7 +78,9 @@ public abstract class AbstractExpressionPointcut implements ExpressionPointcut, 
 	}
 
 	/**
+	 * 设置新的切入点表达式
 	 * Called when a new pointcut expression is set.
+	 * 如果可能的话，应该在此时解析表达式
 	 * The expression should be parsed at this point if possible.
 	 * <p>This implementation is empty.
 	 * @param expression expression to set
@@ -86,6 +91,7 @@ public abstract class AbstractExpressionPointcut implements ExpressionPointcut, 
 	}
 
 	/**
+	 * 返回切入点表达式
 	 * Return this pointcut's expression.
 	 */
 	@Override

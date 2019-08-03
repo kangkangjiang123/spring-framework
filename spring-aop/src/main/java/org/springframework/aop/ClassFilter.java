@@ -17,6 +17,7 @@
 package org.springframework.aop;
 
 /**
+ * 针对给定的类对切入点进行类型匹配
  * Filter that restricts matching of a pointcut or introduction to
  * a given set of target classes.
  *
@@ -31,6 +32,7 @@ package org.springframework.aop;
 public interface ClassFilter {
 
 	/**
+	 * 返回这个切入点是否能用于指定的类
 	 * Should the pointcut apply to the given interface or target class?
 	 * @param clazz the candidate target class
 	 * @return whether the advice should apply to the given target class

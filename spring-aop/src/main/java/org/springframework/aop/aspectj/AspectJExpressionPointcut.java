@@ -64,7 +64,9 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ *
  * Spring {@link org.springframework.aop.Pointcut} implementation
+ * 通过AspectJ来计算切入点的配置表达式
  * that uses the AspectJ weaver to evaluate a pointcut expression.
  *
  * <p>The pointcut expression value is an AspectJ expression. This can
@@ -103,11 +105,12 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 	private static final Log logger = LogFactory.getLog(AspectJExpressionPointcut.class);
 
+	//切入点声明范围
 	@Nullable
 	private Class<?> pointcutDeclarationScope;
-
+	//切入点参数名称
 	private String[] pointcutParameterNames = new String[0];
-
+	//切入点参数类型
 	private Class<?>[] pointcutParameterTypes = new Class<?>[0];
 
 	@Nullable
@@ -146,6 +149,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 
 	/**
+	 * 设置切入点的声明范围
 	 * Set the declaration scope for the pointcut.
 	 */
 	public void setPointcutDeclarationScope(Class<?> pointcutDeclarationScope) {
@@ -153,6 +157,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 	}
 
 	/**
+	 * 设置切入点的参数名称
 	 * Set the parameter names for the pointcut.
 	 */
 	public void setParameterNames(String... names) {
@@ -160,6 +165,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 	}
 
 	/**
+	 * 设置切入点的参数类型
 	 * Set the parameter types for the pointcut.
 	 */
 	public void setParameterTypes(Class<?>... types) {
@@ -186,44 +192,55 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 
 	/**
+	 * 检查这个切入点是否已经准备好匹配
 	 * Check whether this pointcut is ready to match,
+	 * AspectJ切入点表达式是懒加载的
 	 * lazily building the underlying AspectJ pointcut expression.
 	 */
 	private PointcutExpression obtainPointcutExpression() {
+		// 如果没有声明表达式则抛出异常
 		if (getExpression() == null) {
 			throw new IllegalStateException("Must set property 'expression' before attempting to match");
 		}
 		if (this.pointcutExpression == null) {
 			this.pointcutClassLoader = determinePointcutClassLoader();
+			// 懒加载切入点表达式
 			this.pointcutExpression = buildPointcutExpression(this.pointcutClassLoader);
 		}
 		return this.pointcutExpression;
 	}
 
 	/**
+	 * 返回用于切入点评估的类加载器
 	 * Determine the ClassLoader to use for pointcut evaluation.
 	 */
 	@Nullable
 	private ClassLoader determinePointcutClassLoader() {
+		// 如果是ConfigurableBeanFactory则使用其中的ClassLoader
 		if (this.beanFactory instanceof ConfigurableBeanFactory) {
 			return ((ConfigurableBeanFactory) this.beanFactory).getBeanClassLoader();
 		}
 		if (this.pointcutDeclarationScope != null) {
 			return this.pointcutDeclarationScope.getClassLoader();
 		}
+		//获取默认的ClassLoader
 		return ClassUtils.getDefaultClassLoader();
 	}
 
 	/**
+	 * 构建AspectJ切入点表达式
 	 * Build the underlying AspectJ pointcut expression.
 	 */
 	private PointcutExpression buildPointcutExpression(@Nullable ClassLoader classLoader) {
+		//切入点解析器
 		PointcutParser parser = initializePointcutParser(classLoader);
+		//切入点制定的参数进行解析
 		PointcutParameter[] pointcutParameters = new PointcutParameter[this.pointcutParameterNames.length];
 		for (int i = 0; i < pointcutParameters.length; i++) {
 			pointcutParameters[i] = parser.createPointcutParameter(
 					this.pointcutParameterNames[i], this.pointcutParameterTypes[i]);
 		}
+		//返回表达式
 		return parser.parsePointcutExpression(replaceBooleanOperators(resolveExpression()),
 				this.pointcutDeclarationScope, pointcutParameters);
 	}
@@ -235,6 +252,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 	}
 
 	/**
+	 * 初始化基础AspectJ切入点分析器
 	 * Initialize the underlying AspectJ pointcut parser.
 	 */
 	private PointcutParser initializePointcutParser(@Nullable ClassLoader classLoader) {
@@ -247,6 +265,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 
 	/**
+	 * 如果在XML中已经指定了切入点表达式，则用户写的 and 和&&将不起作用
 	 * If a pointcut expression has been specified in XML, the user cannot
 	 * write {@code and} as "&&" (though &amp;&amp; will work).
 	 * We also allow {@code and} between two pointcut sub-expressions.
@@ -261,6 +280,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 
 	/**
+	 * 返回基础AspectJ切入点表达式
 	 * Return the underlying AspectJ pointcut expression.
 	 */
 	public PointcutExpression getPointcutExpression() {
@@ -272,11 +292,13 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 		PointcutExpression pointcutExpression = obtainPointcutExpression();
 		try {
 			try {
+				// 确定此切入点是否与给定类匹配
 				return pointcutExpression.couldMatchJoinPointsInType(targetClass);
 			}
 			catch (ReflectionWorldException ex) {
 				logger.debug("PointcutExpression matching rejected target class - trying fallback expression", ex);
 				// Actually this is still a "maybe" - treat the pointcut as dynamic if we don't know enough yet
+				// 也可能是动态的，所以这里'可能'是异常
 				PointcutExpression fallbackExpression = getFallbackPointcutExpression(targetClass);
 				if (fallbackExpression != null) {
 					return fallbackExpression.couldMatchJoinPointsInType(targetClass);
@@ -291,15 +313,22 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 	@Override
 	public boolean matches(Method method, Class<?> targetClass, boolean hasIntroductions) {
+		//检查切入点是否已经准备好
 		obtainPointcutExpression();
+		//获取目标类的模糊匹配
 		ShadowMatch shadowMatch = getTargetShadowMatch(method, targetClass);
 
+		// 特殊处理
 		// Special handling for this, target, @this, @target, @annotation
+		// 在Spring中-我们可以优化，因为我们知道我们有这个类，
+		// 并且在运行时永远不会有匹配的子类。
 		// in Spring - we can optimize since we know we have exactly this class,
 		// and there will never be matching subclass at runtime.
+		//永远匹配
 		if (shadowMatch.alwaysMatches()) {
 			return true;
 		}
+		//永不匹配
 		else if (shadowMatch.neverMatches()) {
 			return false;
 		}
@@ -392,6 +421,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 
 	/**
+	 * 基于目标类加载器获取新的表达式
 	 * Get a new pointcut expression based on a target class's loader rather than the default.
 	 */
 	@Nullable
