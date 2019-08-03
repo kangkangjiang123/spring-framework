@@ -41,6 +41,7 @@ import org.springframework.core.PriorityOrdered;
 import org.springframework.lang.Nullable;
 
 /**
+ * 用于AbstractApplicationContext的后置增强处理
  * Delegate for AbstractApplicationContext's post-processor handling.
  *
  * @author Juergen Hoeller
@@ -58,16 +59,20 @@ final class PostProcessorRegistrationDelegate {
 		// Invoke BeanDefinitionRegistryPostProcessors first, if any.
 		Set<String> processedBeans = new HashSet<>();
 
+		// 是用于保存BeanDefinition的BeanFactory
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
+			// 将注册的增强区分为BeanDefinition的增强和对BeanFactory的增强
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
+					//记录所在的BeanFactory
 					registryProcessor.postProcessBeanDefinitionRegistry(registry);
+					//这是对BeanDefinition的增强
 					registryProcessors.add(registryProcessor);
 				}
 				else {
@@ -75,6 +80,8 @@ final class PostProcessorRegistrationDelegate {
 				}
 			}
 
+			// 不要在此时实例化FactoryBean：我们需要不初始化所有的常规Bean，
+			// 让BeanFactory的增强处理先来处理他们！
 			// Do not initialize FactoryBeans here: We need to leave all regular beans
 			// uninitialized to let the bean factory post-processors apply to them!
 			// Separate between BeanDefinitionRegistryPostProcessors that implement
@@ -82,65 +89,91 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
 
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
+			// 获取BeanDefinition注册增强，在这里注册额外的BeanDefinition
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
+				//优先排序的BeanDefinition注册增强
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
+					// 添加到第一次处理的增强集合
 					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
+					//记录处理过的增强
 					processedBeans.add(ppName);
 				}
 			}
+			// 对第一次处理的增强集合进行排序
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
+			// 把第一次处理的增强集合进行添加到注册的增强列表
 			registryProcessors.addAll(currentRegistryProcessors);
+			// 进行第一次增强
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+			// 清空增强集合留给第二次使用
 			currentRegistryProcessors.clear();
 
 			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
 			postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
+				//带有排序的BeanDefinition注册增强
 				if (!processedBeans.contains(ppName) && beanFactory.isTypeMatch(ppName, Ordered.class)) {
+					// 添加到第二次处理的增强集合
 					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
+					//记录处理过的增强
 					processedBeans.add(ppName);
 				}
 			}
+			// 对第二次处理的增强集合进行排序
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
+			// 把第二次处理的增强集合进行添加到注册的增强列表
 			registryProcessors.addAll(currentRegistryProcessors);
+			// 进行第二次增强
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+			// 清空增强集合留给第三次使用
 			currentRegistryProcessors.clear();
 
+			// 最后，调用所有其他BeanDefinition注册增强，直到不再出现其他处理器为止。
 			// Finally, invoke all other BeanDefinitionRegistryPostProcessors until no further ones appear.
 			boolean reiterate = true;
 			while (reiterate) {
 				reiterate = false;
 				postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 				for (String ppName : postProcessorNames) {
+					//如果没有处理过
 					if (!processedBeans.contains(ppName)) {
+						// 添加到第三次处理的增强集合
 						currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
+						// 记录处理过的增强
 						processedBeans.add(ppName);
 						reiterate = true;
 					}
 				}
+				// 对第三次处理的增强集合进行排序
 				sortPostProcessors(currentRegistryProcessors, beanFactory);
+				// 把第三次处理的增强集合进行添加到注册的增强列表
 				registryProcessors.addAll(currentRegistryProcessors);
+				// 进行第三次增强
 				invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+				// 清空增强集合留给BeanFactory第一次增强使用
 				currentRegistryProcessors.clear();
 			}
-
+			// 现在，调用到目前为止处理的所有增强的PostProcessBeanFactory回调
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
 
 		else {
+			// 其他类型的BeanFactory，直接进行增强处理
 			// Invoke factory processors registered with the context instance.
 			invokeBeanFactoryPostProcessors(beanFactoryPostProcessors, beanFactory);
 		}
 
+		// 不要在此时实例化FactoryBean：我们需要不初始化所有的常规Bean，
+		// 让BeanFactory的增强处理先来处理他们！
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let the bean factory post-processors apply to them!
 		String[] postProcessorNames =
 				beanFactory.getBeanNamesForType(BeanFactoryPostProcessor.class, true, false);
-
+		// 获取BeanFactory后置增强
 		// Separate between BeanFactoryPostProcessors that implement PriorityOrdered,
 		// Ordered, and the rest.
 		List<BeanFactoryPostProcessor> priorityOrderedPostProcessors = new ArrayList<>();
@@ -148,21 +181,26 @@ final class PostProcessorRegistrationDelegate {
 		List<String> nonOrderedPostProcessorNames = new ArrayList<>();
 		for (String ppName : postProcessorNames) {
 			if (processedBeans.contains(ppName)) {
+				// 跳过，已经在上一个步骤进行处理
 				// skip - already processed in first phase above
 			}
 			else if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
+				//优先排序的BeanFactory后置增强
 				priorityOrderedPostProcessors.add(beanFactory.getBean(ppName, BeanFactoryPostProcessor.class));
 			}
 			else if (beanFactory.isTypeMatch(ppName, Ordered.class)) {
+				//带排序的BeanFactory后置增强
 				orderedPostProcessorNames.add(ppName);
 			}
 			else {
+				//剩下的BeanFactory后置增强
 				nonOrderedPostProcessorNames.add(ppName);
 			}
 		}
-
+		// 对优先排序的BeanFactory后置增强排序
 		// First, invoke the BeanFactoryPostProcessors that implement PriorityOrdered.
 		sortPostProcessors(priorityOrderedPostProcessors, beanFactory);
+		// 执行优先排序的BeanFactory后置增强
 		invokeBeanFactoryPostProcessors(priorityOrderedPostProcessors, beanFactory);
 
 		// Next, invoke the BeanFactoryPostProcessors that implement Ordered.
@@ -170,16 +208,20 @@ final class PostProcessorRegistrationDelegate {
 		for (String postProcessorName : orderedPostProcessorNames) {
 			orderedPostProcessors.add(beanFactory.getBean(postProcessorName, BeanFactoryPostProcessor.class));
 		}
+		// 对带排序的BeanFactory后置增强排序
 		sortPostProcessors(orderedPostProcessors, beanFactory);
 		invokeBeanFactoryPostProcessors(orderedPostProcessors, beanFactory);
+		// 执行带排序的BeanFactory后置增强
 
 		// Finally, invoke all other BeanFactoryPostProcessors.
 		List<BeanFactoryPostProcessor> nonOrderedPostProcessors = new ArrayList<>(nonOrderedPostProcessorNames.size());
 		for (String postProcessorName : nonOrderedPostProcessorNames) {
 			nonOrderedPostProcessors.add(beanFactory.getBean(postProcessorName, BeanFactoryPostProcessor.class));
 		}
+		//执行剩下的BeanFactory后置增强
 		invokeBeanFactoryPostProcessors(nonOrderedPostProcessors, beanFactory);
 
+		// 清除merged bean definitions的缓存，因为这个时候增强可能已经修改了元数据，比如替换了占位符
 		// Clear cached merged bean definitions since the post-processors might have
 		// modified the original metadata, e.g. replacing placeholders in values...
 		beanFactory.clearMetadataCache();
@@ -187,9 +229,10 @@ final class PostProcessorRegistrationDelegate {
 
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
-
+		// 获取所有BeanDefinition的后置增强
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
+		// 注册一个BeanPostProcessorChecker，
 		// Register BeanPostProcessorChecker that logs an info message when
 		// a bean is created during BeanPostProcessor instantiation, i.e. when
 		// a bean is not eligible for getting processed by all BeanPostProcessors.
@@ -266,6 +309,7 @@ final class PostProcessorRegistrationDelegate {
 	}
 
 	/**
+	 * 调用指定的BeanDefinition增强
 	 * Invoke the given BeanDefinitionRegistryPostProcessor beans.
 	 */
 	private static void invokeBeanDefinitionRegistryPostProcessors(
