@@ -60,16 +60,17 @@ import org.springframework.web.reactive.function.BodyExtractor;
 public interface ClientResponse {
 
 	/**
-	 * Return the status code of this response.
-	 * @return the status as an HttpStatus enum value
+	 * Return the HTTP status code as an {@link HttpStatus} enum value.
+	 * @return the HTTP status as an HttpStatus enum value (never {@code null})
 	 * @throws IllegalArgumentException in case of an unknown HTTP status code
+	 * @since #getRawStatusCode()
 	 * @see HttpStatus#valueOf(int)
 	 */
 	HttpStatus statusCode();
 
 	/**
 	 * Return the (potentially non-standard) status code of this response.
-	 * @return the status as an integer
+	 * @return the HTTP status as an integer value
 	 * @since 5.1
 	 * @see #statusCode()
 	 * @see HttpStatus#resolve(int)
@@ -166,7 +167,6 @@ public interface ClientResponse {
 	/**
 	 * Creates a {@link WebClientResponseException} based on the status code,
 	 * headers, and body of this response as well as the corresponding request.
-	 *
 	 * @return a {@code Mono} with a {@code WebClientResponseException} based on this response
 	 * @since 5.2
 	 */
@@ -202,6 +202,17 @@ public interface ClientResponse {
 	 */
 	static Builder create(HttpStatus statusCode, ExchangeStrategies strategies) {
 		return new DefaultClientResponseBuilder(strategies).statusCode(statusCode);
+	}
+
+	/**
+	 * Create a response builder with the given raw status code and strategies for reading the body.
+	 * @param statusCode the status code
+	 * @param strategies the strategies
+	 * @return the created builder
+	 * @since 5.1.9
+	 */
+	static Builder create(int statusCode, ExchangeStrategies strategies) {
+		return new DefaultClientResponseBuilder(strategies).rawStatusCode(statusCode);
 	}
 
 	/**
@@ -270,6 +281,14 @@ public interface ClientResponse {
 		Builder statusCode(HttpStatus statusCode);
 
 		/**
+		 * Set the raw status code of the response.
+		 * @param statusCode the new status code.
+		 * @return this builder
+		 * @since 5.1.9
+		 */
+		Builder rawStatusCode(int statusCode);
+
+		/**
 		 * Add the given header value(s) under the given name.
 		 * @param headerName  the header name
 		 * @param headerValues the header value(s)
@@ -331,6 +350,7 @@ public interface ClientResponse {
 		 * Set the request associated with the response.
 		 * @param request the request
 		 * @return this builder
+		 * @since 5.2
 		 */
 		Builder request(HttpRequest request);
 
