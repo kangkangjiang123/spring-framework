@@ -36,6 +36,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
+ * TODO AOP 通过JDK动态代理来实现增强
  * JDK-based {@link AopProxy} implementation for the Spring AOP framework,
  * based on JDK {@link java.lang.reflect.Proxy dynamic proxies}.
  *

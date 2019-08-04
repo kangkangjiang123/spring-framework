@@ -1353,6 +1353,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		synchronized (this.mergedBeanDefinitions) {
 			RootBeanDefinition mbd = null;
 			// 检查使用全锁,为了执行相同的合并实例。
+			RootBeanDefinition previous = null;
 			// Check with full lock now in order to enforce the same merged instance.
 			if (containingBd == null) {
 				// 从缓存中获取

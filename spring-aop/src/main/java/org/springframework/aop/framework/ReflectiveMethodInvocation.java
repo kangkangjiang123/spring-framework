@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -158,30 +159,38 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 
 	@Override
 	@Nullable
+	//TODO AOP 启动拦截器链的地方
 	public Object proceed() throws Throwable {
+		// 是从-1开始索引的，所以在这里已经到了最后一次proceed，开始执行目标方法
 		//	We start with an index of -1 and increment early.
 		if (this.currentInterceptorIndex == this.interceptorsAndDynamicMethodMatchers.size() - 1) {
+			//执行目标方法
 			return invokeJoinpoint();
 		}
 
 		Object interceptorOrInterceptionAdvice =
 				this.interceptorsAndDynamicMethodMatchers.get(++this.currentInterceptorIndex);
 		if (interceptorOrInterceptionAdvice instanceof InterceptorAndDynamicMethodMatcher) {
+			// 在此处计算动态方法匹配器：静态部分将已被计算并找到匹配项。
 			// Evaluate dynamic method matcher here: static part will already have
 			// been evaluated and found to match.
 			InterceptorAndDynamicMethodMatcher dm =
 					(InterceptorAndDynamicMethodMatcher) interceptorOrInterceptionAdvice;
 			Class<?> targetClass = (this.targetClass != null ? this.targetClass : this.method.getDeclaringClass());
+			// 通过动态匹配
 			if (dm.methodMatcher.matches(this.method, targetClass, this.arguments)) {
+				//执行拦截器
 				return dm.interceptor.invoke(this);
 			}
 			else {
+				// 动态匹配失败，忽略并继续下一次匹配
 				// Dynamic matching failed.
 				// Skip this interceptor and invoke the next in the chain.
 				return proceed();
 			}
 		}
 		else {
+			// 这是个interceptor，我们只需要调用invoke去向下传递即可
 			// It's an interceptor, so we just invoke it: The pointcut will have
 			// been evaluated statically before this object was constructed.
 			return ((MethodInterceptor) interceptorOrInterceptionAdvice).invoke(this);
@@ -189,6 +198,7 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	}
 
 	/**
+	 * 使用反射调用连接点（目标方法），子类可以重写来实现自己的逻辑
 	 * Invoke the joinpoint using reflection.
 	 * Subclasses can override this to use custom invocation.
 	 * @return the return value of the joinpoint

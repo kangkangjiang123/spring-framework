@@ -25,6 +25,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.AfterAdvice;
 
 /**
+ * TODO AOP后置增强
  * Spring AOP advice wrapping an AspectJ after advice method.
  *
  * @author Rod Johnson
@@ -44,9 +45,11 @@ public class AspectJAfterAdvice extends AbstractAspectJAdvice
 	@Override
 	public Object invoke(MethodInvocation mi) throws Throwable {
 		try {
+			//启动拦截器
 			return mi.proceed();
 		}
 		finally {
+			//调用后置通知增强
 			invokeAdviceMethod(getJoinPointMatch(), null, null);
 		}
 	}
