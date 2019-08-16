@@ -86,7 +86,9 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 
 	@Nullable
 	private ConfigurableEnvironment environment;
-
+	/**
+	 * 必须配置的属性集合
+	 */
 	private final Set<String> requiredProperties = new HashSet<>(4);
 
 
@@ -139,6 +141,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 	}
 
 	/**
+	 * 将当前的配置设置到servlet中
 	 * Map config parameters onto bean properties of this servlet, and
 	 * invoke subclass initialization.
 	 * @throws ServletException if bean properties are invalid (or required
@@ -151,10 +154,14 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
 		if (!pvs.isEmpty()) {
 			try {
+				//把servlet对象转化成BeanWrapper，以IOC的处理方式将属性注入到这个BeanWrapper所持有到servlet对象中
 				BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(this);
 				ResourceLoader resourceLoader = new ServletContextResourceLoader(getServletContext());
+				//自定义属性编辑器
 				bw.registerCustomEditor(Resource.class, new ResourceEditor(resourceLoader, getEnvironment()));
+				//子类自定义创建Servlet的BeanWrapper逻辑
 				initBeanWrapper(bw);
+				//注入自定义属性
 				bw.setPropertyValues(pvs, true);
 			}
 			catch (BeansException ex) {
@@ -164,12 +171,13 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 				throw ex;
 			}
 		}
-
+		//自定义初始化ServletBean逻辑
 		// Let subclasses do whatever initialization they like.
 		initServletBean();
 	}
 
 	/**
+	 * 自定义初始化BeanWrapper逻辑
 	 * Initialize the BeanWrapper for this HttpServletBean,
 	 * possibly with custom editors.
 	 * <p>This default implementation is empty.
@@ -221,15 +229,18 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 					new HashSet<>(requiredProperties) : null);
 
 			Enumeration<String> paramNames = config.getInitParameterNames();
+			//注入配置项
 			while (paramNames.hasMoreElements()) {
 				String property = paramNames.nextElement();
 				Object value = config.getInitParameter(property);
 				addPropertyValue(new PropertyValue(property, value));
+				//必填属性完成注入，在校验项中去除
 				if (missingProps != null) {
 					missingProps.remove(property);
 				}
 			}
 
+			//发现必填属性没有在上面注入，需要抛出异常
 			// Fail if we are still missing properties.
 			if (!CollectionUtils.isEmpty(missingProps)) {
 				throw new ServletException(

@@ -17,6 +17,8 @@
 package org.springframework.context;
 
 /**
+ * 配置加载完成后，上下文刷新之前的回调接口
+ * TODO 实现该接口完成配置加载完，上下文刷新之前的自定义功能
  * Callback interface for initializing a Spring {@link ConfigurableApplicationContext}
  * prior to being {@linkplain ConfigurableApplicationContext#refresh() refreshed}.
  *

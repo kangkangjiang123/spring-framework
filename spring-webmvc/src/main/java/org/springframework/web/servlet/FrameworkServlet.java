@@ -70,6 +70,7 @@ import org.springframework.web.util.NestedServletException;
 import org.springframework.web.util.WebUtils;
 
 /**
+ * 负责初始化Spring Servlet WebApplicationContext容器
  * Base servlet for Spring's web framework. Provides integration with
  * a Spring application context, in a JavaBean-based overall solution.
  *
@@ -171,6 +172,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	@Nullable
 	private String contextAttribute;
 
+	//web上下文类型
 	/** WebApplicationContext implementation class to create. */
 	private Class<?> contextClass = DEFAULT_CONTEXT_CLASS;
 
@@ -182,6 +184,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	@Nullable
 	private String namespace;
 
+	//配置文件地址
 	/** Explicit context config location. */
 	@Nullable
 	private String contextConfigLocation;
@@ -193,7 +196,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	/** Comma-delimited ApplicationContextInitializer class names set through init param. */
 	@Nullable
 	private String contextInitializerClasses;
-
+	//是否需要把web上下文设置成servlet上下文的属性
 	/** Should we publish the context as a ServletContext attribute?. */
 	private boolean publishContext = true;
 
@@ -211,7 +214,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 
 	/** Whether to log potentially sensitive info (request params at DEBUG + headers at TRACE). */
 	private boolean enableLoggingRequestDetails = false;
-
+	//web上下文对象
 	/** WebApplicationContext for this servlet. */
 	@Nullable
 	private WebApplicationContext webApplicationContext;
@@ -300,6 +303,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	}
 
 	/**
+	 * 返回servlet上下文属性的名称
 	 * Return the name of the ServletContext attribute which should be used to retrieve the
 	 * {@link WebApplicationContext} that this servlet is supposed to use.
 	 */
@@ -523,10 +527,13 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		if (logger.isInfoEnabled()) {
 			logger.info("Initializing Servlet '" + getServletName() + "'");
 		}
+		//记录启动时间
 		long startTime = System.currentTimeMillis();
 
 		try {
+			//创建web上下文
 			this.webApplicationContext = initWebApplicationContext();
+			//实现子类自定义创建上下文逻辑
 			initFrameworkServlet();
 		}
 		catch (ServletException | RuntimeException ex) {
@@ -548,6 +555,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	}
 
 	/**
+	 * 创建web上下文对象
 	 * Initialize and publish the WebApplicationContext for this servlet.
 	 * <p>Delegates to {@link #createWebApplicationContext} for actual creation
 	 * of the context. Can be overridden in subclasses.
@@ -557,50 +565,62 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see #setContextConfigLocation
 	 */
 	protected WebApplicationContext initWebApplicationContext() {
+		//获取根上下文
 		WebApplicationContext rootContext =
 				WebApplicationContextUtils.getWebApplicationContext(getServletContext());
 		WebApplicationContext wac = null;
-
+		//如果构造时传入了webApplicationContext
 		if (this.webApplicationContext != null) {
+			//使用构造时传入的webApplicationContext
 			// A context instance was injected at construction time -> use it
 			wac = this.webApplicationContext;
 			if (wac instanceof ConfigurableWebApplicationContext) {
 				ConfigurableWebApplicationContext cwac = (ConfigurableWebApplicationContext) wac;
+				//如果上下文没有开启
 				if (!cwac.isActive()) {
 					// The context has not yet been refreshed -> provide services such as
 					// setting the parent context, setting the application context id, etc
 					if (cwac.getParent() == null) {
 						// The context instance was injected without an explicit parent -> set
 						// the root application context (if any; may be null) as the parent
+						//设置他的父上下文为根上下文
 						cwac.setParent(rootContext);
 					}
+					//将配置应用并刷新上下文
 					configureAndRefreshWebApplicationContext(cwac);
 				}
 			}
 		}
+		//构造时没有传入web上下文
 		if (wac == null) {
 			// No context instance was injected at construction time -> see if one
 			// has been registered in the servlet context. If one exists, it is assumed
 			// that the parent context (if any) has already been set and that the
 			// user has performed any initialization such as setting the context id
+			//从servlet上下文中查找web上下文（只有从servlet里获取web上下文不用刷新上下文）
 			wac = findWebApplicationContext();
 		}
+		//servlet上下文中也没有web上下文
 		if (wac == null) {
+			//自己创建一个上下文
 			// No context instance is defined for this servlet -> create a local one
 			wac = createWebApplicationContext(rootContext);
 		}
 
+		//如果这个上下文还有刷新过
 		if (!this.refreshEventReceived) {
 			// Either the context is not a ConfigurableApplicationContext with refresh
 			// support or the context injected at construction time had already been
 			// refreshed -> trigger initial onRefresh manually here.
 			synchronized (this.onRefreshMonitor) {
+				//刷新上下文
 				onRefresh(wac);
 			}
 		}
-
+		//如果需要把web上下文设置servlet上下文中
 		if (this.publishContext) {
 			// Publish the context as a servlet context attribute.
+			//把当前的web上下文设置到servlet上下文中
 			String attrName = getServletContextAttributeName();
 			getServletContext().setAttribute(attrName, wac);
 		}
@@ -609,6 +629,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	}
 
 	/**
+	 * 通过servlet上下文找到web上下文并返回
 	 * Retrieve a {@code WebApplicationContext} from the {@code ServletContext}
 	 * attribute with the {@link #setContextAttribute configured name}. The
 	 * {@code WebApplicationContext} must have already been loaded and stored in the
@@ -622,8 +643,10 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	protected WebApplicationContext findWebApplicationContext() {
 		String attrName = getContextAttribute();
 		if (attrName == null) {
+			//没有设置servlet上下文 返回null
 			return null;
 		}
+		//从servlet上下文中获取web上下文
 		WebApplicationContext wac =
 				WebApplicationContextUtils.getWebApplicationContext(getServletContext(), attrName);
 		if (wac == null) {
@@ -655,39 +678,51 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 					"': custom WebApplicationContext class [" + contextClass.getName() +
 					"] is not of type ConfigurableWebApplicationContext");
 		}
+		//反射创建web上下文
 		ConfigurableWebApplicationContext wac =
 				(ConfigurableWebApplicationContext) BeanUtils.instantiateClass(contextClass);
-
+		//设置当前的配置
 		wac.setEnvironment(getEnvironment());
+		//设置父上下文为传递进来的根上下文
 		wac.setParent(parent);
 		String configLocation = getContextConfigLocation();
 		if (configLocation != null) {
+			//如果设置了配置文件地址，则应用配置文件地址
 			wac.setConfigLocation(configLocation);
 		}
+		//应用配置并初始化上下文
 		configureAndRefreshWebApplicationContext(wac);
 
 		return wac;
 	}
 
+	/**
+	 * 配置和刷新上下文
+	 * @param wac
+	 */
 	protected void configureAndRefreshWebApplicationContext(ConfigurableWebApplicationContext wac) {
 		if (ObjectUtils.identityToString(wac).equals(wac.getId())) {
+			//上下文id还是默认id，需要重新设置
 			// The application context id is still set to its original default value
 			// -> assign a more useful id based on available information
 			if (this.contextId != null) {
+				//如果当前有上下文id则使用当前的id
 				wac.setId(this.contextId);
 			}
 			else {
+				//没有设置上下文id则创建一个默认id
 				// Generate default id...
 				wac.setId(ConfigurableWebApplicationContext.APPLICATION_CONTEXT_ID_PREFIX +
 						ObjectUtils.getDisplayString(getServletContext().getContextPath()) + '/' + getServletName());
 			}
 		}
-
+		//设置servlet上下文
 		wac.setServletContext(getServletContext());
 		wac.setServletConfig(getServletConfig());
 		wac.setNamespace(getNamespace());
 		wac.addApplicationListener(new SourceFilteringListener(wac, new ContextRefreshListener()));
 
+		// 应用配置，在每一次刷新上下文（refresh）之前都必须保证属性被完全应用
 		// The wac environment's #initPropertySources will be called in any case when the context
 		// is refreshed; do it eagerly here to ensure servlet property sources are in place for
 		// use in any post-processing or initialization that occurs below prior to #refresh
@@ -695,13 +730,15 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		if (env instanceof ConfigurableWebEnvironment) {
 			((ConfigurableWebEnvironment) env).initPropertySources(getServletContext(), getServletConfig());
 		}
-
+		//执行用户提供的自定义上下文生成逻辑
 		postProcessWebApplicationContext(wac);
 		applyInitializers(wac);
+		//刷新上下文
 		wac.refresh();
 	}
 
 	/**
+	 * 创建web上下文
 	 * Instantiate the WebApplicationContext for this servlet, either a default
 	 * {@link org.springframework.web.context.support.XmlWebApplicationContext}
 	 * or a {@link #setContextClass custom context class}, if set.

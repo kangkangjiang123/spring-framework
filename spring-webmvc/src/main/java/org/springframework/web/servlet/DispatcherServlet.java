@@ -65,6 +65,7 @@ import org.springframework.web.util.NestedServletException;
 import org.springframework.web.util.WebUtils;
 
 /**
+ * TODO MVC 初始化一个Servlet的WebApplicationContext容器，他的父容器就是root WebApplicationContext（ContextLoaderListener构建的）
  * Central dispatcher for HTTP request handlers/controllers, e.g. for web UI controllers
  * or HTTP-based remote service exporters. Dispatches to registered handlers for processing
  * a web request, providing convenient mapping and exception handling facilities.
