@@ -31,6 +31,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ReflectionUtils;
 
 /**
+ * TODO servlet 3.0在spring mvc中的实现标准
  * Servlet 3.0 {@link ServletContainerInitializer} designed to support code-based
  * configuration of the servlet container using Spring's {@link WebApplicationInitializer}
  * SPI as opposed to (or possibly in combination with) the traditional
@@ -108,6 +109,7 @@ import org.springframework.util.ReflectionUtils;
  * @see #onStartup(Set, ServletContext)
  * @see WebApplicationInitializer
  */
+//servlet3.0容器在启动时自动扫描带WebApplicationInitializer处理器的实现类
 @HandlesTypes(WebApplicationInitializer.class)
 public class SpringServletContainerInitializer implements ServletContainerInitializer {
 
@@ -145,11 +147,14 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 
 		if (webAppInitializerClasses != null) {
 			for (Class<?> waiClass : webAppInitializerClasses) {
+				// 一些servlet容器提供了无效的类，不管这些类如何实现直接忽略
 				// Be defensive: Some servlet containers provide us with invalid classes,
 				// no matter what @HandlesTypes says...
+				//不是接口（是实现类） &&  不是抽象类  &&  是WebApplicationInitializer
 				if (!waiClass.isInterface() && !Modifier.isAbstract(waiClass.getModifiers()) &&
 						WebApplicationInitializer.class.isAssignableFrom(waiClass)) {
 					try {
+						//转换为WebApplicationInitializer类并添加到过滤后的实现列表中
 						initializers.add((WebApplicationInitializer)
 								ReflectionUtils.accessibleConstructor(waiClass).newInstance());
 					}
@@ -159,13 +164,14 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 				}
 			}
 		}
-
+		//没有初始化web上下文实现，直接退出
 		if (initializers.isEmpty()) {
 			servletContext.log("No Spring WebApplicationInitializer types detected on classpath");
 			return;
 		}
 
 		servletContext.log(initializers.size() + " Spring WebApplicationInitializers detected on classpath");
+		//对初始化的实现进行排序
 		AnnotationAwareOrderComparator.sort(initializers);
 		for (WebApplicationInitializer initializer : initializers) {
 			initializer.onStartup(servletContext);

@@ -60,10 +60,12 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
 		super.onStartup(servletContext);
+		//注册DispatcherServlet
 		registerDispatcherServlet(servletContext);
 	}
 
 	/**
+	 * 在给定的servlet上下文中注册DispatcherServlet
 	 * Register a {@link DispatcherServlet} against the given servlet context.
 	 * <p>This method will create a {@code DispatcherServlet} with the name returned by
 	 * {@link #getServletName()}, initializing it with the application context returned
@@ -75,33 +77,43 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	 * @param servletContext the context to register the servlet against
 	 */
 	protected void registerDispatcherServlet(ServletContext servletContext) {
+		//获取servlet上下文名称
 		String servletName = getServletName();
 		Assert.hasLength(servletName, "getServletName() must not return null or empty");
 
+		//创建Servlet应用上下文
 		WebApplicationContext servletAppContext = createServletApplicationContext();
 		Assert.notNull(servletAppContext, "createServletApplicationContext() must not return null");
 
+		//用指定的Servlet应用上下文创建DispatcherServlet
 		FrameworkServlet dispatcherServlet = createDispatcherServlet(servletAppContext);
 		Assert.notNull(dispatcherServlet, "createDispatcherServlet(WebApplicationContext) must not return null");
+		//获取上下文初始化选项并放在DispatcherServlet中
 		dispatcherServlet.setContextInitializers(getServletApplicationContextInitializers());
 
+		//将Servlet对象放在ServletRegistration中，进行下一步封装
 		ServletRegistration.Dynamic registration = servletContext.addServlet(servletName, dispatcherServlet);
 		if (registration == null) {
 			throw new IllegalStateException("Failed to register servlet with name '" + servletName + "'. " +
 					"Check if there is another servlet registered under the same name.");
 		}
 
+		//设置启动优先级
 		registration.setLoadOnStartup(1);
+		//设置servlet映射
 		registration.addMapping(getServletMappings());
+		//是否支持异步
 		registration.setAsyncSupported(isAsyncSupported());
 
+		//获取Servlet过滤器
 		Filter[] filters = getServletFilters();
 		if (!ObjectUtils.isEmpty(filters)) {
 			for (Filter filter : filters) {
+				//注册Servlet锅炉器
 				registerServletFilter(servletContext, filter);
 			}
 		}
-
+		//用户自定义Servlet封装逻辑
 		customizeRegistration(registration);
 	}
 
@@ -115,6 +127,7 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	}
 
 	/**
+	 * 创建Servlet应用上下文
 	 * Create a servlet application context to be provided to the {@code DispatcherServlet}.
 	 * <p>The returned context is delegated to Spring's
 	 * {@link DispatcherServlet#DispatcherServlet(WebApplicationContext)}. As such,
@@ -125,6 +138,7 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	protected abstract WebApplicationContext createServletApplicationContext();
 
 	/**
+	 * 用指定的Servlet应用上下文创建DispatcherServlet
 	 * Create a {@link DispatcherServlet} (or other kind of {@link FrameworkServlet}-derived
 	 * dispatcher) with the specified {@link WebApplicationContext}.
 	 * <p>Note: This allows for any {@link FrameworkServlet} subclass as of 4.2.3.
@@ -135,6 +149,7 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	}
 
 	/**
+	 * 获取创建DispatcherServlet时需要设定的上下文初始化选项
 	 * Specify application context initializers to be applied to the servlet-specific
 	 * application context that the {@code DispatcherServlet} is being created with.
 	 * @since 4.2
@@ -218,6 +233,7 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	}
 
 	/**
+	 * 用户自定义Servlet封装逻辑
 	 * Optionally perform further registration customization once
 	 * {@link #registerDispatcherServlet(ServletContext)} has completed.
 	 * @param registration the {@code DispatcherServlet} registration to be customized
