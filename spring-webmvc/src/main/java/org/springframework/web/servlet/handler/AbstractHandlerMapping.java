@@ -320,14 +320,14 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 
 
 	/**
-	 * 初始化拦截器
+	 * 初始化上下文
 	 * Initializes the interceptors.
 	 * @see #extendInterceptors(java.util.List)
 	 * @see #initInterceptors()
 	 */
 	@Override
 	protected void initApplicationContext() throws BeansException {
-		//子类初始化自定义实现
+		//子类初始化拦截器自定义实现
 		extendInterceptors(this.interceptors);
 		//查找BeanFactory中的拦截器Bean
 		detectMappedInterceptors(this.adaptedInterceptors);
@@ -439,7 +439,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 
 
 	/**
-	 * 根据请求查找默认的拦截器，如果找不到拦截器则返回默认拦截器
+	 * 根据请求匹配默认的处理器，如果找不到处理器则返回默认处理器
 	 * Look up a handler for the given request, falling back to the default
 	 * handler if no specific one is found.
 	 * @param request current HTTP request
@@ -449,17 +449,17 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	@Override
 	@Nullable
 	public final HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
-		//根据请求获得拦截器
+		//根据请求获得处理器
 		Object handler = getHandlerInternal(request);
-		//没有匹配到拦截器，获取默认拦截器
+		//没有匹配到处理器，获取默认处理器
 		if (handler == null) {
 			handler = getDefaultHandler();
 		}
-		//没有匹配到拦截器也没有默认拦截器，直接返回null
+		//没有匹配到处理器也没有默认处理器，直接返回null
 		if (handler == null) {
 			return null;
 		}
-		//返回的有可能是拦截器bean名称，根据Bean名称获取对应的拦截器
+		//返回的有可能是拦截器bean名称，根据Bean名称获取对应的处理器
 		// Bean name or resolved handler?
 		if (handler instanceof String) {
 			String handlerName = (String) handler;
@@ -535,18 +535,18 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 				(HandlerExecutionChain) handler : new HandlerExecutionChain(handler));
 
 		String lookupPath = this.urlPathHelper.getLookupPathForRequest(request, LOOKUP_PATH);
-		//遍历拦截器链
+		//遍历处理器链
 		for (HandlerInterceptor interceptor : this.adaptedInterceptors) {
 			if (interceptor instanceof MappedInterceptor) {
 				MappedInterceptor mappedInterceptor = (MappedInterceptor) interceptor;
-				//选择匹配的拦截器
+				//选择匹配的处理器
 				if (mappedInterceptor.matches(lookupPath, this.pathMatcher)) {
-					//将匹配的拦截器放入执行链中
+					//将匹配的处理器放入执行链中
 					chain.addInterceptor(mappedInterceptor.getInterceptor());
 				}
 			}
 			else {
-				//将拦截器放入执行链中
+				//将处理器放入执行链中
 				chain.addInterceptor(interceptor);
 			}
 		}

@@ -29,6 +29,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 /**
+ * 程序执行的处理链
  * Handler execution chain, consisting of handler object and any handler interceptors.
  * Returned by HandlerMapping's {@link HandlerMapping#getHandler} method.
  *
@@ -40,14 +41,26 @@ public class HandlerExecutionChain {
 
 	private static final Log logger = LogFactory.getLog(HandlerExecutionChain.class);
 
+	/**
+	 * 处理器
+	 */
 	private final Object handler;
 
+	/**
+	 * 拦截器链
+	 */
 	@Nullable
 	private HandlerInterceptor[] interceptors;
 
+	/**
+	 * 需要执行的拦截器链
+	 */
 	@Nullable
 	private List<HandlerInterceptor> interceptorList;
 
+	/**
+	 * 已拦截器执行的下标
+	 */
 	private int interceptorIndex = -1;
 
 
@@ -105,6 +118,7 @@ public class HandlerExecutionChain {
 		if (this.interceptorList == null) {
 			this.interceptorList = new ArrayList<>();
 			if (this.interceptors != null) {
+				//把拦截器进行合并
 				// An interceptor array specified through the constructor
 				CollectionUtils.mergeArrayIntoCollection(this.interceptors, this.interceptorList);
 			}
@@ -127,54 +141,69 @@ public class HandlerExecutionChain {
 
 
 	/**
+	 * 请求前置拦截逻辑
 	 * Apply preHandle methods of registered interceptors.
 	 * @return {@code true} if the execution chain should proceed with the
 	 * next interceptor or the handler itself. Else, DispatcherServlet assumes
 	 * that this interceptor has already dealt with the response itself.
 	 */
 	boolean applyPreHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		//获取应用的拦截器
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
+			//迭代处理
 			for (int i = 0; i < interceptors.length; i++) {
 				HandlerInterceptor interceptor = interceptors[i];
+				//前置拦截
 				if (!interceptor.preHandle(request, response, this.handler)) {
+					//触发回调
 					triggerAfterCompletion(request, response, null);
+					//前置拦截失败
 					return false;
 				}
+				//记录当前应用的拦截器下标
 				this.interceptorIndex = i;
 			}
 		}
+		//前置拦截成功
 		return true;
 	}
 
 	/**
+	 * 请求后置拦截逻辑
 	 * Apply postHandle methods of registered interceptors.
 	 */
 	void applyPostHandle(HttpServletRequest request, HttpServletResponse response, @Nullable ModelAndView mv)
 			throws Exception {
-
+		//获取应用的拦截器
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
+			//迭代处理
 			for (int i = interceptors.length - 1; i >= 0; i--) {
 				HandlerInterceptor interceptor = interceptors[i];
+				//后置拦截
 				interceptor.postHandle(request, response, this.handler, mv);
 			}
 		}
 	}
 
 	/**
+	 * 触发回调
 	 * Trigger afterCompletion callbacks on the mapped HandlerInterceptors.
+	 * 前置拦截处理完成并返回true的时候触发
 	 * Will just invoke afterCompletion for all interceptors whose preHandle invocation
 	 * has successfully completed and returned true.
 	 */
 	void triggerAfterCompletion(HttpServletRequest request, HttpServletResponse response, @Nullable Exception ex)
 			throws Exception {
-
+		//获取应用的拦截器
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
+			//迭代处理
 			for (int i = this.interceptorIndex; i >= 0; i--) {
 				HandlerInterceptor interceptor = interceptors[i];
 				try {
+					//触发回调函数
 					interceptor.afterCompletion(request, response, this.handler, ex);
 				}
 				catch (Throwable ex2) {
@@ -185,15 +214,20 @@ public class HandlerExecutionChain {
 	}
 
 	/**
+	 * 异步请求处理开始后的拦截
 	 * Apply afterConcurrentHandlerStarted callback on mapped AsyncHandlerInterceptors.
 	 */
 	void applyAfterConcurrentHandlingStarted(HttpServletRequest request, HttpServletResponse response) {
+		//获取应用的拦截器
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
+			//迭代处理
 			for (int i = interceptors.length - 1; i >= 0; i--) {
+				//处理异步请求拦截器
 				if (interceptors[i] instanceof AsyncHandlerInterceptor) {
 					try {
 						AsyncHandlerInterceptor asyncInterceptor = (AsyncHandlerInterceptor) interceptors[i];
+						//异步请求处理开始拦截
 						asyncInterceptor.afterConcurrentHandlingStarted(request, response, this.handler);
 					}
 					catch (Throwable ex) {

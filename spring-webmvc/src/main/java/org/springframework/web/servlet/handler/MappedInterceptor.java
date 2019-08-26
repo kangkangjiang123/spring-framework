@@ -44,14 +44,26 @@ import org.springframework.web.servlet.ModelAndView;
  */
 public final class MappedInterceptor implements HandlerInterceptor {
 
+	/**
+	 * 匹配的路径
+	 */
 	@Nullable
 	private final String[] includePatterns;
 
+	/**
+	 * 排除的路径
+	 */
 	@Nullable
 	private final String[] excludePatterns;
 
+	/**
+	 * 拦截器
+	 */
 	private final HandlerInterceptor interceptor;
 
+	/**
+	 * 路径匹配器
+	 */
 	@Nullable
 	private PathMatcher pathMatcher;
 
@@ -172,14 +184,14 @@ public final class MappedInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-
+		//执行当前拦截器的前置拦截
 		return this.interceptor.preHandle(request, response, handler);
 	}
 
 	@Override
 	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
 			@Nullable ModelAndView modelAndView) throws Exception {
-
+		//执行当前拦截器的后置拦截
 		this.interceptor.postHandle(request, response, handler, modelAndView);
 	}
 

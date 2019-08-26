@@ -597,16 +597,17 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 初始化请求匹配器
 	 * Initialize the HandlerMappings used by this class.
 	 * <p>If no HandlerMapping beans are defined in the BeanFactory for this namespace,
 	 * we default to BeanNameUrlHandlerMapping.
 	 */
 	private void initHandlerMappings(ApplicationContext context) {
-		//清空拦截器，重新加载
+		//清空请求匹配器，重新加载
 		this.handlerMappings = null;
 
 		if (this.detectAllHandlerMappings) {
-			//获取所有的处理器，包括关联上下文中的处理器
+			//获取所有的请求匹配器，包括关联上下文中的请求匹配器
 			// Find all HandlerMappings in the ApplicationContext, including ancestor contexts.
 			Map<String, HandlerMapping> matchingBeans =
 					BeanFactoryUtils.beansOfTypeIncludingAncestors(context, HandlerMapping.class, true, false);
@@ -619,7 +620,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 		else {
 			try {
-				//从本身上下文获取HandlerMapping类型的Bean
+				//从本身上下文获取请求匹配器类型的Bean
 				HandlerMapping hm = context.getBean(HANDLER_MAPPING_BEAN_NAME, HandlerMapping.class);
 				this.handlerMappings = Collections.singletonList(hm);
 			}
@@ -627,7 +628,7 @@ public class DispatcherServlet extends FrameworkServlet {
 				// Ignore, we'll add a default HandlerMapping later.
 			}
 		}
-		//如果没有处理器，则添加一个默认的处理器，确保一定能获取到
+		//如果没有请求匹配器，则添加一个默认的请求匹配器，确保一定能获取到
 		// Ensure we have at least one HandlerMapping, by registering
 		// a default HandlerMapping if no other mappings are found.
 		if (this.handlerMappings == null) {

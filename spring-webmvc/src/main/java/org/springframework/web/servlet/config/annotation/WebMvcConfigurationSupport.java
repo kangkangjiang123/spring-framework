@@ -324,6 +324,7 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	}
 
 	/**
+	 * 获得拦截器链
 	 * Provide access to the shared handler interceptors used to configure
 	 * {@link HandlerMapping} instances with.
 	 * <p>This method cannot be overridden; use {@link #addInterceptors} instead.
