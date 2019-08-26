@@ -32,6 +32,7 @@ import org.springframework.lang.Nullable;
 public interface RequestToViewNameTranslator {
 
 	/**
+	 * 获取请求对应的视图名称
 	 * Translate the given {@link HttpServletRequest} into a view name.
 	 * @param request the incoming {@link HttpServletRequest} providing
 	 * the context from which a view name is to be resolved

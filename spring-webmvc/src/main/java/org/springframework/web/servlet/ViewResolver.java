@@ -21,6 +21,7 @@ import java.util.Locale;
 import org.springframework.lang.Nullable;
 
 /**
+ * 根据视图名称和国际化信息解析出最终的视图
  * Interface to be implemented by objects that can resolve views by name.
  *
  * <p>View state doesn't change during the running of the application,
@@ -38,6 +39,7 @@ import org.springframework.lang.Nullable;
 public interface ViewResolver {
 
 	/**
+	 * 根据视图名称解析视图
 	 * Resolve the given view by name.
 	 * <p>Note: To allow for ViewResolver chaining, a ViewResolver should
 	 * return {@code null} if a view with the given name is not defined in it.
