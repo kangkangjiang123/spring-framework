@@ -19,6 +19,7 @@ package org.springframework.web.servlet.handler;
 import org.springframework.web.method.HandlerMethod;
 
 /**
+ * 为Mapping提供命名策略
  * A strategy for assigning a name to a handler method's mapping.
  *
  * <p>The strategy can be configured on
@@ -42,6 +43,7 @@ import org.springframework.web.method.HandlerMethod;
 public interface HandlerMethodMappingNamingStrategy<T> {
 
 	/**
+	 * 从指定的处理方法和映射提供名字
 	 * Determine the name for the given HandlerMethod and mapping.
 	 * @param handlerMethod the handler method
 	 * @param mapping the mapping

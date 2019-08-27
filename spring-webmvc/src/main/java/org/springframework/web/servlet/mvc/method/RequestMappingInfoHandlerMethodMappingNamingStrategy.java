@@ -41,16 +41,20 @@ public class RequestMappingInfoHandlerMethodMappingNamingStrategy
 
 	@Override
 	public String getName(HandlerMethod handlerMethod, RequestMappingInfo mapping) {
+		//如果映射的名称不为空，则使用映射的名称（Mapping配置了name属性和value属性）
 		if (mapping.getName() != null) {
 			return mapping.getName();
 		}
 		StringBuilder sb = new StringBuilder();
+		//使用类名（Mapping配置了value属性并且没有配置name属性）
 		String simpleTypeName = handlerMethod.getBeanType().getSimpleName();
+		//全转为大写
 		for (int i = 0; i < simpleTypeName.length(); i++) {
 			if (Character.isUpperCase(simpleTypeName.charAt(i))) {
 				sb.append(simpleTypeName.charAt(i));
 			}
 		}
+		//拼接#号和方法名
 		sb.append(SEPARATOR).append(handlerMethod.getMethod().getName());
 		return sb.toString();
 	}

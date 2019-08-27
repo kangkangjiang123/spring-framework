@@ -126,6 +126,7 @@ public class HandlerMethod {
 	}
 
 	/**
+	 * 通过Bean名称，处理方法和Bean工厂来创建
 	 * Create an instance from a bean name, a method, and a {@code BeanFactory}.
 	 * The method {@link #createWithResolvedBean()} may be used later to
 	 * re-create the {@code HandlerMethod} with an initialized bean.
@@ -194,9 +195,11 @@ public class HandlerMethod {
 
 	private void evaluateResponseStatus() {
 		ResponseStatus annotation = getMethodAnnotation(ResponseStatus.class);
+		//异常返回状态未指定
 		if (annotation == null) {
 			annotation = AnnotatedElementUtils.findMergedAnnotation(getBeanType(), ResponseStatus.class);
 		}
+		//异常返回状态已经指定直接使用
 		if (annotation != null) {
 			this.responseStatus = annotation.code();
 			this.responseStatusReason = annotation.reason();
