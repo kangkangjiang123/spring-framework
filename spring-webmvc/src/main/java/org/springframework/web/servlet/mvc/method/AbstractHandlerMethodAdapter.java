@@ -66,10 +66,12 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 	 */
 	@Override
 	public final boolean supports(Object handler) {
+		//支持HandlerMethod类型的处理器和子类定义可以支持的处理器
 		return (handler instanceof HandlerMethod && supportsInternal((HandlerMethod) handler));
 	}
 
 	/**
+	 * 交给子类实现的，用于补充指定什么类型是可以支持的，
 	 * Given a handler method, return whether or not this adapter can support it.
 	 * @param handlerMethod the handler method to check
 	 * @return whether or not this adapter can adapt the given method

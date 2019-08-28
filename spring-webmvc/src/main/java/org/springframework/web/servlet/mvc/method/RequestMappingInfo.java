@@ -57,18 +57,33 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	@Nullable
 	private final String name;
 
+	/**
+	 * 请求路径条件
+	 */
 	private final PatternsRequestCondition patternsCondition;
-
+	/**
+	 * 请求方法条件
+	 */
 	private final RequestMethodsRequestCondition methodsCondition;
-
+	/**
+	 * 请求参数条件
+	 */
 	private final ParamsRequestCondition paramsCondition;
-
+	/**
+	 * 请求头条件
+	 */
 	private final HeadersRequestCondition headersCondition;
-
+	/**
+	 * 可消费请求体类型条件
+	 */
 	private final ConsumesRequestCondition consumesCondition;
-
+	/**
+	 * 可生产请求体类型条件
+	 */
 	private final ProducesRequestCondition producesCondition;
-
+	/**
+	 * 自定义条件
+	 */
 	private final RequestConditionHolder customConditionHolder;
 
 
@@ -207,6 +222,7 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	}
 
 	/**
+	 * 用RequestMappingInfo的条件对当前的请求进行一次匹配
 	 * Checks if all conditions in this request mapping info match the provided request and returns
 	 * a potentially new request mapping info with conditions tailored to the current request.
 	 * <p>For example the returned instance may contain the subset of URL patterns that match to
@@ -216,30 +232,37 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	@Override
 	@Nullable
 	public RequestMappingInfo getMatchingCondition(HttpServletRequest request) {
+		//请求方法匹配
 		RequestMethodsRequestCondition methods = this.methodsCondition.getMatchingCondition(request);
 		if (methods == null) {
 			return null;
 		}
+		//请求参数匹配
 		ParamsRequestCondition params = this.paramsCondition.getMatchingCondition(request);
 		if (params == null) {
 			return null;
 		}
+		//请求头匹配
 		HeadersRequestCondition headers = this.headersCondition.getMatchingCondition(request);
 		if (headers == null) {
 			return null;
 		}
+		//可消费请求体匹配
 		ConsumesRequestCondition consumes = this.consumesCondition.getMatchingCondition(request);
 		if (consumes == null) {
 			return null;
 		}
+		//可生产请求体匹配
 		ProducesRequestCondition produces = this.producesCondition.getMatchingCondition(request);
 		if (produces == null) {
 			return null;
 		}
+		//请求路径匹配
 		PatternsRequestCondition patterns = this.patternsCondition.getMatchingCondition(request);
 		if (patterns == null) {
 			return null;
 		}
+		//自定义条件匹配
 		RequestConditionHolder custom = this.customConditionHolder.getMatchingCondition(request);
 		if (custom == null) {
 			return null;

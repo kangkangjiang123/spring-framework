@@ -286,6 +286,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			Map<Method, T> methods = MethodIntrospector.selectMethods(userType,
 					(MethodIntrospector.MetadataLookup<T>) method -> {
 						try {
+							//获取匹配的方法
 							return getMappingForMethod(method, userType);
 						}
 						catch (Throwable ex) {
@@ -392,6 +393,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		try {
 			//根据请求路径查找处理方法
 			HandlerMethod handlerMethod = lookupHandlerMethod(lookupPath, request);
+
 			return (handlerMethod != null ? handlerMethod.createWithResolvedBean() : null);
 		}
 		finally {
@@ -401,6 +403,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	}
 
 	/**
+	 * TODO spring mvc根据请求路径和请求匹配需要处理的方法
 	 * Look up the best-matching handler method for the current request.
 	 * If multiple matches are found, the best match is selected.
 	 * @param lookupPath mapping lookup path within the current servlet mapping
@@ -411,28 +414,37 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	@Nullable
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception {
+		//创建匹配的列表
 		List<Match> matches = new ArrayList<>();
+		//先根据直接路径匹配
 		List<T> directPathMatches = this.mappingRegistry.getMappingsByUrl(lookupPath);
 		if (directPathMatches != null) {
 			addMatchingMappings(directPathMatches, matches, request);
 		}
+		//匹配不到再根据映射注册表匹配
 		if (matches.isEmpty()) {
 			// No choice but to go through all mappings...
 			addMatchingMappings(this.mappingRegistry.getMappings().keySet(), matches, request);
 		}
-
+		//可以找到处理方法
 		if (!matches.isEmpty()) {
+			//匹配最合适的一个处理器
 			Comparator<Match> comparator = new MatchComparator(getMappingComparator(request));
 			matches.sort(comparator);
+			//获取最合适的那个
 			Match bestMatch = matches.get(0);
+			//如果匹配到多个处理方法
 			if (matches.size() > 1) {
 				if (logger.isTraceEnabled()) {
 					logger.trace(matches.size() + " matching mappings: " + matches);
 				}
+				//如果是Cors预先检查请求（Cross-Origin Resource Sharing跨域资源共享，一种跨域解决方案），返回默认的处理器（默认为空处理方法）
 				if (CorsUtils.isPreFlightRequest(request)) {
 					return PREFLIGHT_AMBIGUOUS_MATCH;
 				}
+				//获取第二个合适的处理方法
 				Match secondBestMatch = matches.get(1);
+				//如果前两个处理方法匹配度相同，则出现异常
 				if (comparator.compare(bestMatch, secondBestMatch) == 0) {
 					Method m1 = bestMatch.handlerMethod.getMethod();
 					Method m2 = secondBestMatch.handlerMethod.getMethod();
@@ -442,10 +454,13 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				}
 			}
 			request.setAttribute(BEST_MATCHING_HANDLER_ATTRIBUTE, bestMatch.handlerMethod);
+			//处理最优的处理方法
 			handleMatch(bestMatch.mapping, lookupPath, request);
 			return bestMatch.handlerMethod;
 		}
+		//找不到处理方法
 		else {
+			//没有匹配的处理方法
 			return handleNoMatch(this.mappingRegistry.getMappings().keySet(), lookupPath, request);
 		}
 	}
@@ -510,6 +525,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	// Abstract template methods
 
 	/**
+	 * 判断bean是不是处理器类型的bean
 	 * Whether the given type is a handler with handler methods.
 	 * @param beanType the type of the bean being checked
 	 * @return "true" if this a handler type, "false" otherwise.
@@ -517,6 +533,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	protected abstract boolean isHandler(Class<?> beanType);
 
 	/**
+	 * 提供匹配的处理方法集合
 	 * Provide the mapping for a handler method. A method for which no
 	 * mapping can be provided is not a handler method.
 	 * @param method the method to provide a mapping for
@@ -544,6 +561,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	protected abstract T getMatchingMapping(T mapping, HttpServletRequest request);
 
 	/**
+	 * 比较哪个处理器更合适该请求
 	 * Return a comparator for sorting matching mappings.
 	 * The returned comparator should sort 'better' matches higher.
 	 * @param request the current request

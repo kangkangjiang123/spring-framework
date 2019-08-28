@@ -56,6 +56,7 @@ public class SimpleServletHandlerAdapter implements HandlerAdapter {
 
 	@Override
 	public boolean supports(Object handler) {
+		//支持Servlet类型
 		return (handler instanceof Servlet);
 	}
 
@@ -63,7 +64,7 @@ public class SimpleServletHandlerAdapter implements HandlerAdapter {
 	@Nullable
 	public ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-
+		//转换成Servlet类型并进行处理
 		((Servlet) handler).service(request, response);
 		return null;
 	}

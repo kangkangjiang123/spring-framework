@@ -42,6 +42,7 @@ public class HttpRequestHandlerAdapter implements HandlerAdapter {
 
 	@Override
 	public boolean supports(Object handler) {
+		//支持HttpRequestHandler类型的子类接口
 		return (handler instanceof HttpRequestHandler);
 	}
 
@@ -49,13 +50,14 @@ public class HttpRequestHandlerAdapter implements HandlerAdapter {
 	@Nullable
 	public ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-
+		//转换成HttpRequestHandler并处理请求
 		((HttpRequestHandler) handler).handleRequest(request, response);
 		return null;
 	}
 
 	@Override
 	public long getLastModified(HttpServletRequest request, Object handler) {
+		//如果实现了LastModified接口就获取最终处理时间，没有实现则返回-1
 		if (handler instanceof LastModified) {
 			return ((LastModified) handler).getLastModified(request);
 		}
