@@ -19,9 +19,10 @@ package org.springframework.web.socket.server.support;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+
 import javax.servlet.ServletException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -35,7 +36,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.when;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -70,8 +71,8 @@ public class WebSocketHttpRequestHandlerTests {
 		TestInterceptor interceptor = new TestInterceptor(true);
 		this.requestHandler.setHandshakeInterceptors(Collections.singletonList(interceptor));
 
-		when(this.handshakeHandler.doHandshake(any(), any(), any(), any()))
-				.thenThrow(new IllegalStateException("bad state"));
+		given(this.handshakeHandler.doHandshake(any(), any(), any(), any()))
+				.willThrow(new IllegalStateException("bad state"));
 
 		assertThatThrownBy(() -> this.requestHandler.handleRequest(new MockHttpServletRequest(), this.response))
 				.isInstanceOf(HandshakeFailureException.class)

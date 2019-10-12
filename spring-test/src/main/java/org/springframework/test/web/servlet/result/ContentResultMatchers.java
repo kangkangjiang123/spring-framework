@@ -16,7 +16,9 @@
 
 package org.springframework.test.web.servlet.result;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
@@ -209,7 +211,7 @@ public class ContentResultMatchers {
 	 */
 	public ResultMatcher json(String jsonContent, boolean strict) {
 		return result -> {
-			String content = result.getResponse().getContentAsString();
+			String content = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
 			this.jsonHelper.assertJsonEqual(jsonContent, content, strict);
 		};
 	}

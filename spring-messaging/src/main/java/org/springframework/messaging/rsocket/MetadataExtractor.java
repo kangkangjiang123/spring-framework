@@ -19,6 +19,7 @@ import java.util.Map;
 
 import io.rsocket.Payload;
 
+import org.springframework.core.codec.DecodingException;
 import org.springframework.util.MimeType;
 
 /**
@@ -30,6 +31,7 @@ import org.springframework.util.MimeType;
  *
  * @author Rossen Stoyanchev
  * @since 5.2
+ * @see MetadataExtractorRegistry
  */
 public interface MetadataExtractor {
 
@@ -38,16 +40,6 @@ public interface MetadataExtractor {
 	 */
 	String ROUTE_KEY = "route";
 
-	/**
-	 * Constant MimeType {@code "message/x.rsocket.composite-metadata.v0"}.
-	 */
-	MimeType COMPOSITE_METADATA = new MimeType("message", "x.rsocket.composite-metadata.v0");
-
-	/**
-	 * Constant for MimeType {@code "message/x.rsocket.routing.v0"}.
-	 */
-	MimeType ROUTING = new MimeType("message", "x.rsocket.routing.v0");
-
 
 	/**
 	 * Extract a map of values from the given {@link Payload} metadata.
@@ -55,6 +47,8 @@ public interface MetadataExtractor {
 	 * @param payload the payload whose metadata should be read
 	 * @param metadataMimeType the metadata MimeType for the connection.
 	 * @return name values pairs extracted from the metadata
+	 * @throws DecodingException if the metadata cannot be decoded
+	 * @throws IllegalArgumentException if routing metadata cannot be decoded
 	 */
 	Map<String, Object> extract(Payload payload, MimeType metadataMimeType);
 

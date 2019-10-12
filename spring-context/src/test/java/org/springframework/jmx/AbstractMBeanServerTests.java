@@ -16,12 +16,19 @@
 
 package org.springframework.jmx;
 
+import java.net.BindException;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.LifecycleMethodExecutionExceptionHandler;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
+import org.opentest4j.TestAbortedException;
 
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -52,10 +59,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public abstract class AbstractMBeanServerTests {
 
+	@RegisterExtension
+	BindExceptionHandler bindExceptionHandler = new BindExceptionHandler();
+
 	protected MBeanServer server;
 
 
-	@Before
+	@BeforeEach
 	public final void setUp() throws Exception {
 		this.server = MBeanServerFactory.createMBeanServer();
 		try {
@@ -75,7 +85,7 @@ public abstract class AbstractMBeanServerTests {
 		return ctx;
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		releaseServer();
 		onTearDown();
@@ -112,4 +122,36 @@ public abstract class AbstractMBeanServerTests {
 		assertThat(getServer().isRegistered(objectName)).as(message).isFalse();
 	}
 
+
+	private static class BindExceptionHandler implements TestExecutionExceptionHandler, LifecycleMethodExecutionExceptionHandler {
+
+		@Override
+		public void handleTestExecutionException(ExtensionContext context, Throwable throwable) throws Throwable {
+			handleBindException(throwable);
+		}
+
+		@Override
+		public void handleBeforeEachMethodExecutionException(ExtensionContext context, Throwable throwable)
+				throws Throwable {
+			handleBindException(throwable);
+		}
+
+		@Override
+		public void handleAfterEachMethodExecutionException(ExtensionContext context, Throwable throwable)
+				throws Throwable {
+			handleBindException(throwable);
+		}
+
+		private void handleBindException(Throwable throwable) throws Throwable {
+			// Abort test?
+			if (throwable instanceof BindException) {
+				throw new TestAbortedException("Failed to bind to MBeanServer", throwable);
+			}
+			// Else rethrow to conform to the contracts of TestExecutionExceptionHandler and LifecycleMethodExecutionExceptionHandler
+			throw throwable;
+		}
+
+	}
+
 }
+

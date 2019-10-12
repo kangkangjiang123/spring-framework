@@ -156,6 +156,19 @@ class DefaultClientResponse implements ClientResponse {
 	}
 
 	@Override
+	public Mono<Void> releaseBody() {
+		return body(BodyExtractors.toDataBuffers())
+				.map(DataBufferUtils::release)
+				.then();
+	}
+
+	@Override
+	public Mono<ResponseEntity<Void>> toBodilessEntity() {
+		return releaseBody()
+				.then(WebClientUtils.toEntity(this, Mono.empty()));
+	}
+
+	@Override
 	public <T> Mono<ResponseEntity<T>> toEntity(Class<T> bodyType) {
 		return WebClientUtils.toEntity(this, bodyToMono(bodyType));
 	}

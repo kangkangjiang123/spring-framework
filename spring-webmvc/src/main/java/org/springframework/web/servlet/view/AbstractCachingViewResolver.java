@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -151,6 +152,7 @@ public abstract class AbstractCachingViewResolver extends WebApplicationObjectSu
 	/**
 	 * Sets the filter that determines if view should be cached.
 	 * Default behaviour is to cache all views.
+	 * @since 5.2
 	 */
 	public void setCacheFilter(CacheFilter cacheFilter) {
 		Assert.notNull(cacheFilter, "CacheFilter must not be null");
@@ -159,6 +161,7 @@ public abstract class AbstractCachingViewResolver extends WebApplicationObjectSu
 
 	/**
 	 * Return filter function that determines if view should be cached.
+	 * @since 5.2
 	 */
 	public CacheFilter getCacheFilter() {
 		return this.cacheFilter;
@@ -300,14 +303,14 @@ public abstract class AbstractCachingViewResolver extends WebApplicationObjectSu
 	public interface CacheFilter {
 
 		/**
-		 * Indicates whether the given view should be cached. The name and
-		 * locale used to resolve the view are also provided.
+		 * Indicates whether the given view should be cached.
+		 * The name and locale used to resolve the view are also provided.
 		 * @param view the view
-		 * @param viewName the name used to resolve {@code view}
-		 * @param locale the locale used to resolve {@code view}
-		 * @return {@code true} if the view should be cached; {@code false}
-		 * otherwise
+		 * @param viewName the name used to resolve the {@code view}
+		 * @param locale the locale used to resolve the {@code view}
+		 * @return {@code true} if the view should be cached; {@code false} otherwise
 		 */
 		boolean filter(View view, String viewName, Locale locale);
 	}
+
 }

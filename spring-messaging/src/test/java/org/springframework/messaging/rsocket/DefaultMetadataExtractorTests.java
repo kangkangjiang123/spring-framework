@@ -15,27 +15,33 @@
  */
 package org.springframework.messaging.rsocket;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
 import io.netty.buffer.PooledByteBufAllocator;
 import io.rsocket.Payload;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import io.rsocket.metadata.WellKnownMimeType;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import org.springframework.core.ResolvableType;
+import org.springframework.core.codec.AbstractDataBufferDecoder;
 import org.springframework.core.codec.ByteArrayDecoder;
 import org.springframework.core.codec.StringDecoder;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.MimeType;
+import org.springframework.util.MimeTypeUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.springframework.messaging.rsocket.MetadataExtractor.COMPOSITE_METADATA;
 import static org.springframework.messaging.rsocket.MetadataExtractor.ROUTE_KEY;
-import static org.springframework.messaging.rsocket.MetadataExtractor.ROUTING;
 import static org.springframework.util.MimeTypeUtils.TEXT_HTML;
 import static org.springframework.util.MimeTypeUtils.TEXT_PLAIN;
 import static org.springframework.util.MimeTypeUtils.TEXT_XML;
@@ -47,19 +53,23 @@ import static org.springframework.util.MimeTypeUtils.TEXT_XML;
  */
 public class DefaultMetadataExtractorTests {
 
+	private static MimeType COMPOSITE_METADATA =
+			MimeTypeUtils.parseMimeType(WellKnownMimeType.MESSAGE_RSOCKET_COMPOSITE_METADATA.getString());
+
+
 	private RSocketStrategies strategies;
 
 	private DefaultMetadataExtractor extractor;
 
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		DataBufferFactory bufferFactory = new LeakAwareNettyDataBufferFactory(PooledByteBufAllocator.DEFAULT);
 		this.strategies = RSocketStrategies.builder().dataBufferFactory(bufferFactory).build();
 		this.extractor = new DefaultMetadataExtractor(StringDecoder.allMimeTypes());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws InterruptedException {
 		DataBufferFactory bufferFactory = this.strategies.dataBufferFactory();
 		((LeakAwareNettyDataBufferFactory) bufferFactory).checkForLeaks(Duration.ofSeconds(5));
@@ -108,10 +118,11 @@ public class DefaultMetadataExtractorTests {
 
 	@Test
 	public void route() {
-		MetadataEncoder metadataEncoder = new MetadataEncoder(ROUTING, this.strategies).route("toA");
+		MimeType metaMimeType = MimeTypeUtils.parseMimeType(WellKnownMimeType.MESSAGE_RSOCKET_ROUTING.getString());
+		MetadataEncoder metadataEncoder = new MetadataEncoder(metaMimeType, this.strategies).route("toA");
 		DataBuffer metadata = metadataEncoder.encode();
 		Payload payload = createPayload(metadata);
-		Map<String, Object> result = this.extractor.extract(payload, ROUTING);
+		Map<String, Object> result = this.extractor.extract(payload, metaMimeType);
 		payload.release();
 
 		assertThat(result).hasSize(1).containsEntry(ROUTE_KEY, "toA");
@@ -151,6 +162,24 @@ public class DefaultMetadataExtractorTests {
 	}
 
 	@Test
+	public void nonCompositeMetadataCanBeReadTwice() {
+		DefaultMetadataExtractor extractor = new DefaultMetadataExtractor(new TestDecoder());
+		extractor.metadataToExtract(TEXT_PLAIN, String.class, "name");
+
+		MetadataEncoder encoder = new MetadataEncoder(TEXT_PLAIN, this.strategies).metadata("value", null);
+		DataBuffer metadata = encoder.encode();
+		Payload payload = createPayload(metadata);
+
+		Map<String, Object> result = extractor.extract(payload, TEXT_PLAIN);
+		assertThat(result).hasSize(1).containsEntry("name", "value");
+
+		result = extractor.extract(payload, TEXT_PLAIN);
+		assertThat(result).hasSize(1).containsEntry("name", "value");
+
+		payload.release();
+	}
+
+	@Test
 	public void noDecoder() {
 		DefaultMetadataExtractor extractor =
 				new DefaultMetadataExtractor(Collections.singletonList(new ByteArrayDecoder())
@@ -166,4 +195,25 @@ public class DefaultMetadataExtractorTests {
 		return PayloadUtils.createPayload(this.strategies.dataBufferFactory().allocateBuffer(), metadata);
 	}
 
+
+	/**
+	 * Like StringDecoder but consumes the reader index in order to prove that
+	 * extraction uses a slice and can be read twice.
+	 */
+	private static class TestDecoder extends AbstractDataBufferDecoder<String> {
+
+		public TestDecoder() {
+			super(TEXT_PLAIN);
+		}
+
+		@Override
+		public String decode(DataBuffer dataBuffer, ResolvableType elementType,
+				@Nullable MimeType mimeType, @Nullable Map<String, Object> hints) {
+
+			byte[] bytes = new byte[dataBuffer.readableByteCount()];
+			dataBuffer.read(bytes);
+			DataBufferUtils.release(dataBuffer);
+			return new String(bytes, StandardCharsets.UTF_8);
+		}
+	}
 }

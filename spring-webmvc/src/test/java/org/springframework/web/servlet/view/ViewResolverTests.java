@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -29,8 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.jstl.core.Config;
 import javax.servlet.jsp.jstl.fmt.LocalizationContext;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValue;
@@ -71,7 +72,7 @@ public class ViewResolverTests {
 	private final MockHttpServletRequest request = new MockHttpServletRequest(this.sc);
 	private final HttpServletResponse response = new MockHttpServletResponse();
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.wac.setServletContext(this.sc);
 	}

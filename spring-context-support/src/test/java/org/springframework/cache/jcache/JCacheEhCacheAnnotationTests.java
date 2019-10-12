@@ -21,9 +21,9 @@ import javax.cache.Caching;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.spi.CachingProvider;
 
-import org.junit.After;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
@@ -67,7 +67,7 @@ public class JCacheEhCacheAnnotationTests extends AbstractCacheAnnotationTests {
 		return Caching.getCachingProvider("org.ehcache.jcache.JCacheCachingProvider");
 	}
 
-	@After
+	@AfterEach
 	public void shutdown() {
 		if (jCacheManager != null) {
 			jCacheManager.close();
@@ -77,28 +77,28 @@ public class JCacheEhCacheAnnotationTests extends AbstractCacheAnnotationTests {
 
 	@Override
 	@Test
-	@Ignore("Multi cache manager support to be added")
+	@Disabled("Multi cache manager support to be added")
 	public void testCustomCacheManager() {
 	}
 
 	@Test
 	public void testEvictWithTransaction() {
-		txTemplate.execute(() -> testEvict(this.cs, false));
+		txTemplate.executeWithoutResult(s -> testEvict(this.cs, false));
 	}
 
 	@Test
 	public void testEvictEarlyWithTransaction() {
-		txTemplate.execute(() -> testEvictEarly(this.cs));
+		txTemplate.executeWithoutResult(s -> testEvictEarly(this.cs));
 	}
 
 	@Test
 	public void testEvictAllWithTransaction() {
-		txTemplate.execute(() -> testEvictAll(this.cs, false));
+		txTemplate.executeWithoutResult(s -> testEvictAll(this.cs, false));
 	}
 
 	@Test
 	public void testEvictAllEarlyWithTransaction() {
-		txTemplate.execute(() -> testEvictAllEarly(this.cs));
+		txTemplate.executeWithoutResult(s -> testEvictAllEarly(this.cs));
 	}
 
 

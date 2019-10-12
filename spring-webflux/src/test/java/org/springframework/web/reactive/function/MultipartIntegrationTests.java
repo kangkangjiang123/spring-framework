@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import org.junit.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -33,6 +32,7 @@ import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.FormFieldPart;
 import org.springframework.http.codec.multipart.Part;
+import org.springframework.http.server.reactive.bootstrap.HttpServer;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -49,19 +49,21 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 /**
  * @author Sebastien Deleuze
  */
-public class MultipartIntegrationTests extends AbstractRouterFunctionIntegrationTests {
+class MultipartIntegrationTests extends AbstractRouterFunctionIntegrationTests {
 
 	private final WebClient webClient = WebClient.create();
 
 	private ClassPathResource resource = new ClassPathResource("org/springframework/http/codec/multipart/foo.txt");
 
 
-	@Test
-	public void multipartData() {
+	@ParameterizedHttpServerTest
+	void multipartData(HttpServer httpServer) throws Exception {
+		startServer(httpServer);
+
 		Mono<ClientResponse> result = webClient
 				.post()
 				.uri("http://localhost:" + this.port + "/multipartData")
-				.body(generateBody())
+				.bodyValue(generateBody())
 				.exchange();
 
 		StepVerifier
@@ -70,12 +72,14 @@ public class MultipartIntegrationTests extends AbstractRouterFunctionIntegration
 				.verifyComplete();
 	}
 
-	@Test
-	public void parts() {
+	@ParameterizedHttpServerTest
+	void parts(HttpServer httpServer) throws Exception {
+		startServer(httpServer);
+
 		Mono<ClientResponse> result = webClient
 				.post()
 				.uri("http://localhost:" + this.port + "/parts")
-				.body(generateBody())
+				.bodyValue(generateBody())
 				.exchange();
 
 		StepVerifier
@@ -84,12 +88,14 @@ public class MultipartIntegrationTests extends AbstractRouterFunctionIntegration
 				.verifyComplete();
 	}
 
-	@Test
-	public void transferTo() {
+	@ParameterizedHttpServerTest
+	void transferTo(HttpServer httpServer) throws Exception {
+		startServer(httpServer);
+
 		Mono<String> result = webClient
 				.post()
 				.uri("http://localhost:" + this.port + "/transferTo")
-				.body(generateBody())
+				.bodyValue(generateBody())
 				.retrieve()
 				.bodyToMono(String.class);
 
@@ -170,7 +176,7 @@ public class MultipartIntegrationTests extends AbstractRouterFunctionIntegration
 							Path tempFile = Files.createTempFile("MultipartIntegrationTests", null);
 							return part.transferTo(tempFile)
 									.then(ServerResponse.ok()
-											.body(tempFile.toString()));
+											.bodyValue(tempFile.toString()));
 						}
 						catch (Exception e) {
 							return Mono.error(e);

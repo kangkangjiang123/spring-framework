@@ -59,10 +59,8 @@ import org.springframework.web.util.UriBuilderFactory;
  * </ul>
  * <p>For examples with a request body see:
  * <ul>
- * <li>{@link RequestBodySpec#body(Object) body(Object)}
+ * <li>{@link RequestBodySpec#bodyValue(Object) bodyValue(Object)}
  * <li>{@link RequestBodySpec#body(Publisher, Class) body(Publisher,Class)}
- * <li>{@link RequestBodySpec#body(Object, Class) body(Object,Class)}
- * <li>{@link RequestBodySpec#body(BodyInserter) body(BodyInserter)}
  * </ul>
  *
  * @author Rossen Stoyanchev
@@ -519,8 +517,8 @@ public interface WebClient {
 		RequestBodySpec contentType(MediaType contentType);
 
 		/**
-		 * A shortcut for {@link #body(BodyInserter)} with an
-		 * {@linkplain BodyInserters#fromObject Object inserter}.
+		 * Shortcut for {@link #body(BodyInserter)} with a
+		 * {@linkplain BodyInserters#fromValue value inserter}.
 		 * For example:
 		 * <p><pre class="code">
 		 * Person person = ... ;
@@ -528,65 +526,24 @@ public interface WebClient {
 		 * Mono&lt;Void&gt; result = client.post()
 		 *     .uri("/persons/{id}", id)
 		 *     .contentType(MediaType.APPLICATION_JSON)
-		 *     .body(person)
+		 *     .bodyValue(person)
 		 *     .retrieve()
 		 *     .bodyToMono(Void.class);
 		 * </pre>
-		 * <p>For multipart requests, provide a
-		 * {@link org.springframework.util.MultiValueMap MultiValueMap}. The
-		 * values in the {@code MultiValueMap} can be any Object representing
-		 * the body of the part, or an
-		 * {@link org.springframework.http.HttpEntity HttpEntity} representing
-		 * a part with body and headers. The {@code MultiValueMap} can be built
+		 * <p>For multipart requests consider providing
+		 * {@link org.springframework.util.MultiValueMap MultiValueMap} prepared
 		 * with {@link org.springframework.http.client.MultipartBodyBuilder
 		 * MultipartBodyBuilder}.
-		 * @param body the {@code Object} to write to the request
+		 * @param body the value to write to the request body
 		 * @return this builder
-		 * @throws IllegalArgumentException if {@code body} is a {@link Publisher} or an
-		 * instance of a type supported by {@link ReactiveAdapterRegistry#getSharedInstance()},
-		 * for which {@link #body(Publisher, Class)} or {@link #body(Object, Class)} should be used.
+		 * @throws IllegalArgumentException if {@code body} is a
+		 * {@link Publisher} or producer known to {@link ReactiveAdapterRegistry}
 		 * @since 5.2
 		 */
-		RequestHeadersSpec<?> body(Object body);
+		RequestHeadersSpec<?> bodyValue(Object body);
 
 		/**
-		 * A shortcut for {@link #body(BodyInserter)} with a
-		 * {@linkplain BodyInserters#fromProducer inserter}.
-		 * For example:
-		 * <p><pre>
-		 * Single&lt;Person&gt; personSingle = ... ;
-		 *
-		 * Mono&lt;Void&gt; result = client.post()
-		 *     .uri("/persons/{id}", id)
-		 *     .contentType(MediaType.APPLICATION_JSON)
-		 *     .body(personSingle, Person.class)
-		 *     .retrieve()
-		 *     .bodyToMono(Void.class);
-		 * </pre>
-		 * @param producer the producer to write to the request. This must be a
-		 * {@link Publisher} or another producer adaptable to a
-		 * {@code Publisher} via {@link ReactiveAdapterRegistry}
-		 * @param elementClass the class of elements contained in the producer
-		 * @return this builder
-		 * @since 5.2
-		 */
-		RequestHeadersSpec<?> body(Object producer, Class<?> elementClass);
-
-		/**
-		 * A variant of {@link #body(Object, Class)} that allows providing
-		 * element type information that includes generics via a
-		 * {@link ParameterizedTypeReference}.
-		 * @param producer the producer to write to the request. This must be a
-		 * {@link Publisher} or another producer adaptable to a
-		 * {@code Publisher} via {@link ReactiveAdapterRegistry}
-		 * @param elementTypeRef the type reference of elements contained in the producer
-		 * @return this builder
-		 * @since 5.2
-		 */
-		RequestHeadersSpec<?> body(Object producer, ParameterizedTypeReference<?> elementTypeRef);
-
-		/**
-		 * A shortcut for {@link #body(BodyInserter)} with a
+		 * Shortcut for {@link #body(BodyInserter)} with a
 		 * {@linkplain BodyInserters#fromPublisher Publisher inserter}.
 		 * For example:
 		 * <p><pre>
@@ -600,7 +557,7 @@ public interface WebClient {
 		 *     .bodyToMono(Void.class);
 		 * </pre>
 		 * @param publisher the {@code Publisher} to write to the request
-		 * @param elementClass the class of elements contained in the publisher
+		 * @param elementClass the type of elements published
 		 * @param <T> the type of the elements contained in the publisher
 		 * @param <P> the type of the {@code Publisher}
 		 * @return this builder
@@ -608,11 +565,10 @@ public interface WebClient {
 		<T, P extends Publisher<T>> RequestHeadersSpec<?> body(P publisher, Class<T> elementClass);
 
 		/**
-		 * A variant of {@link #body(Publisher, Class)} that allows providing
-		 * element type information that includes generics via a
-		 * {@link ParameterizedTypeReference}.
+		 * Variant of {@link #body(Publisher, Class)} that allows providing
+		 * element type information with generics.
 		 * @param publisher the {@code Publisher} to write to the request
-		 * @param elementTypeRef the type reference of elements contained in the publisher
+		 * @param elementTypeRef the type of elements published
 		 * @param <T> the type of the elements contained in the publisher
 		 * @param <P> the type of the {@code Publisher}
 		 * @return this builder
@@ -621,9 +577,30 @@ public interface WebClient {
 				ParameterizedTypeReference<T> elementTypeRef);
 
 		/**
+		 * Variant of {@link #body(Publisher, Class)} that allows using any
+		 * producer that can be resolved to {@link Publisher} via
+		 * {@link ReactiveAdapterRegistry}.
+		 * @param producer the producer to write to the request
+		 * @param elementClass the type of elements produced
+		 * @return this builder
+		 * @since 5.2
+		 */
+		RequestHeadersSpec<?> body(Object producer, Class<?> elementClass);
+
+		/**
+		 * Variant of {@link #body(Publisher, ParameterizedTypeReference)} that
+		 * allows using any producer that can be resolved to {@link Publisher}
+		 * via {@link ReactiveAdapterRegistry}.
+		 * @param producer the producer to write to the request
+		 * @param elementTypeRef the type of elements produced
+		 * @return this builder
+		 * @since 5.2
+		 */
+		RequestHeadersSpec<?> body(Object producer, ParameterizedTypeReference<?> elementTypeRef);
+
+		/**
 		 * Set the body of the request using the given body inserter.
-		 * {@link BodyInserters} provides access to built-in implementations of
-		 * {@link BodyInserter}.
+		 * See {@link BodyInserters} for built-in {@link BodyInserter} implementations.
 		 * @param inserter the body inserter to use for the request body
 		 * @return this builder
 		 * @see org.springframework.web.reactive.function.BodyInserters
@@ -631,33 +608,10 @@ public interface WebClient {
 		RequestHeadersSpec<?> body(BodyInserter<?, ? super ClientHttpRequest> inserter);
 
 		/**
-		 * A shortcut for {@link #body(BodyInserter)} with an
-		 * {@linkplain BodyInserters#fromObject Object inserter}.
-		 * For example:
-		 * <p><pre class="code">
-		 * Person person = ... ;
-		 *
-		 * Mono&lt;Void&gt; result = client.post()
-		 *     .uri("/persons/{id}", id)
-		 *     .contentType(MediaType.APPLICATION_JSON)
-		 *     .syncBody(person)
-		 *     .retrieve()
-		 *     .bodyToMono(Void.class);
-		 * </pre>
-		 * <p>For multipart requests, provide a
-		 * {@link org.springframework.util.MultiValueMap MultiValueMap}. The
-		 * values in the {@code MultiValueMap} can be any Object representing
-		 * the body of the part, or an
-		 * {@link org.springframework.http.HttpEntity HttpEntity} representing
-		 * a part with body and headers. The {@code MultiValueMap} can be built
-		 * with {@link org.springframework.http.client.MultipartBodyBuilder
-		 * MultipartBodyBuilder}.
-		 * @param body the {@code Object} to write to the request
-		 * @return this builder
-		 * @throws IllegalArgumentException if {@code body} is a {@link Publisher} or an
-		 * instance of a type supported by {@link ReactiveAdapterRegistry#getSharedInstance()},
-		 * for which {@link #body(Publisher, Class)} or {@link #body(Object, Class)} should be used.
-		 * @deprecated as of Spring Framework 5.2 in favor of {@link #body(Object)}
+		 * Shortcut for {@link #body(BodyInserter)} with a
+		 * {@linkplain BodyInserters#fromValue value inserter}.
+		 * As of 5.2 this method delegates to {@link #bodyValue(Object)}.
+		 * @deprecated as of Spring Framework 5.2 in favor of {@link #bodyValue(Object)}
 		 */
 		@Deprecated
 		RequestHeadersSpec<?> syncBody(Object body);
@@ -797,6 +751,18 @@ public interface WebClient {
 		 * @since 5.2
 		 */
 		<T> Mono<ResponseEntity<List<T>>> toEntityList(ParameterizedTypeReference<T> elementTypeRef);
+
+		/**
+		 * Return the response as a delayed {@code ResponseEntity} containing status and headers,
+		 * but no body.  By default, if the response has status code 4xx or 5xx, the {@code Mono}
+		 * will contain a {@link WebClientException}. This can be overridden with
+		 * {@link #onStatus(Predicate, Function)}.
+		 * Calling this method will {@linkplain ClientResponse#releaseBody() release} the body of
+		 * the response.
+		 * @return {@code Mono} with the bodiless {@code ResponseEntity}
+		 * @since 5.2
+		 */
+		Mono<ResponseEntity<Void>> toBodilessEntity();
 	}
 
 

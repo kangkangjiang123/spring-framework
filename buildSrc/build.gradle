@@ -4,15 +4,20 @@ plugins {
 
 repositories {
 	mavenCentral()
+	gradlePluginPortal()
 }
 
 dependencies {
-	testImplementation 'junit:junit:4.12'
-	testImplementation 'org.assertj:assertj-core:3.11.1'
+	implementation "me.champeau.gradle:japicmp-gradle-plugin:0.2.8"
+	implementation "com.google.guava:guava:18.0" // required by japicmp-gradle-plugin
 }
 
 gradlePlugin {
 	plugins {
+		apiDiffPlugin {
+			id = "org.springframework.build.api-diff"
+			implementationClass = "org.springframework.build.api.ApiDiffPlugin"
+		}
 		compileConventionsPlugin {
 			id = "org.springframework.build.compile"
 			implementationClass = "org.springframework.build.compile.CompilerConventionsPlugin"

@@ -19,6 +19,7 @@ package org.springframework.test.web.client.match;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+
 import javax.xml.xpath.XPathExpressionException;
 
 import org.hamcrest.Matcher;
@@ -180,6 +181,20 @@ public abstract class MockRestRequestMatchers {
 			Assert.state(headerValues != null, "No header values");
 			for (int i = 0; i < expectedValues.length; i++) {
 				assertEquals("Request header [" + name + "]", expectedValues[i], headerValues.get(i));
+			}
+		};
+	}
+
+	/**
+	 * Assert that the given request header does not exist.
+	 * @since 5.2
+	 */
+	public static RequestMatcher headerDoesNotExist(String name) {
+		return request -> {
+			List<String> headerValues = request.getHeaders().get(name);
+			if (headerValues != null) {
+				fail("Expected header <" + name + "> not to exist, but it exists with values: " +
+						headerValues);
 			}
 		};
 	}
