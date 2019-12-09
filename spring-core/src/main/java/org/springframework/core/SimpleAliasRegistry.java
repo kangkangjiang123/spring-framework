@@ -110,6 +110,18 @@ public class SimpleAliasRegistry implements AliasRegistry {
 		return false;
 	}
 
+	/**
+	 * fankangkang 测试检查循环map的方法
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		SimpleAliasRegistry simpleAliasRegistry = new SimpleAliasRegistry();
+		simpleAliasRegistry.aliasMap.put("4","2");
+		simpleAliasRegistry.aliasMap.put("2","1");
+		simpleAliasRegistry.aliasMap.put("1","6");
+		System.out.println(simpleAliasRegistry.hasAlias("6","4"));
+	}
+
 	@Override
 	public void removeAlias(String alias) {
 		synchronized (this.aliasMap) {

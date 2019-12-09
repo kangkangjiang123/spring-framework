@@ -558,6 +558,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #instantiateBean
 	 * @see #instantiateUsingFactoryMethod
 	 * @see #autowireConstructor
+	 * fkk: 此处是为了创建bean实例，里面有关三级缓存的存放和使用。
 	 */
 	protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)
 			throws BeanCreationException {
@@ -610,6 +611,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						"' to allow for resolving potential circular references");
 			}
 			// 将提前暴露的bean 实例加入到 singletonFactories 中,避免循环依赖
+			//fkk：此处就是在创建的时候发现以及缓存中没有的话将此对象放入三级缓存当中去，并清空二级缓存
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 		// 实例化Bean
@@ -634,11 +636,22 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 1.bean是单例模式
 		// 2.允许循环引用
 		// 3.正在创建单例对象
+		// earlySingletonExposure：如果你的bean允许被早期暴露出去 也就是说可以被循环引用  那这里就会进行检查
+		// 此段代码非常重要~~~~~但大多数人都忽略了它
 		if (earlySingletonExposure) {
 			// 获取提前创建的bean
+			// 此时一级缓存肯定还没数据，但是呢此时候二级缓存earlySingletonObjects也没数据
+			//注意，注意：第二参数为false  表示不会再去三级缓存里查了~~~
+
+			// 此处非常巧妙的一点：：：因为上面各式各样的实例化、初始化的后置处理器都执行了，如果你在上面执行了这一句
+			//  ((ConfigurableListableBeanFactory)this.beanFactory).registerSingleton(beanName, bean);
+			// 那么此处得到的earlySingletonReference 的引用最终会是你手动放进去的Bean最终返回，完美的实现了"偷天换日" 特别适合中间件的设计
+			// 我们知道，执行完此doCreateBean后执行addSingleton()  其实就是把自己再添加一次  **再一次强调，完美实现偷天换日**
 			Object earlySingletonReference = getSingleton(beanName, false);
 			if (earlySingletonReference != null) {
 				// 如果初始化的bean在创建前后依然是同一个，那就没有被增强
+				// 这个意思是如果经过了initializeBean()后，exposedObject还是木有变，那就可以大胆放心的返回了
+				// initializeBean会调用后置处理器，这个时候可以生成一个代理对象，那这个时候它哥俩就不会相等了 走else去判断吧
 				if (exposedObject == bean) {
 					exposedObject = earlySingletonReference;
 				}
@@ -647,6 +660,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					// 获取依赖
 					String[] dependentBeans = getDependentBeans(beanName);
 					Set<String> actualDependentBeans = new LinkedHashSet<>(dependentBeans.length);
+
+					// 一个个检查它所以Bean
+					// removeSingletonIfCreatedForTypeCheckOnly这个放见下面  在AbstractBeanFactory里面
+					// 简单的说，它如果判断到该dependentBean并没有在创建中的了的情况下,那就把它从所有缓存中移除~~~  并且返回true
+					// 否则（比如确实在创建中） 那就返回false 进入我们的if里面~  表示所谓的真正依赖
+					//（解释：就是真的需要依赖它先实例化，才能实例化自己的依赖）
 					for (String dependentBean : dependentBeans) {
 						// 移除缓存中的对应依赖bean
 						if (!removeSingletonIfCreatedForTypeCheckOnly(dependentBean)) {

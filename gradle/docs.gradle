@@ -51,7 +51,7 @@ task api(type: Javadoc) {
 	}
 }
 
-dokka {
+/*dokka {
 	dependsOn {
 		tasks.getByName("api")
 	}
@@ -81,7 +81,7 @@ dokka {
 	externalDocumentationLink {
 		url = new URL("https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/")
 	}
-}
+}*/
 
 configurations {
 	docs
@@ -95,13 +95,13 @@ dependencies {
 task extractDocResources(type: Sync) {
 	dependsOn configurations.docs
 	from "src/docs/asciidoc/"
-	from {
+	from {ƒ
 		configurations.docs.collect { zipTree(it) }
 	}
 	into "$buildDir/asciidoc/build"
 }
 
-asciidoctor {
+/*asciidoctor {
 	sourceDir "$buildDir/asciidoc/build"
 	sources {
 		include '*.adoc'
@@ -132,7 +132,7 @@ asciidoctor {
 			stylesheet: 'spring.css',
 			'spring-version': project.version
 
-}
+}*/
 
 asciidoctor.dependsOn extractDocResources
 
