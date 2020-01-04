@@ -61,6 +61,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * Constant for the default scope name: {@code ""}, equivalent to singleton
 	 * status unless overridden from a parent bean definition (if applicable).
+	 * bean的作用范围，对应bean属性默认scope
 	 */
 	public static final String SCOPE_DEFAULT = "";
 
@@ -145,6 +146,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private boolean abstractFlag = false;
 
+	/**
+	 * 是否延迟加载
+	 */
 	@Nullable
 	private Boolean lazyInit;
 
@@ -174,32 +178,65 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private String factoryMethodName;
 
+	/**
+	 * 记录构造函数注入属性
+	 */
 	@Nullable
 	private ConstructorArgumentValues constructorArgumentValues;
 
+	/**
+	 * 普通属性集合
+	 */
 	@Nullable
 	private MutablePropertyValues propertyValues;
 
+	/**
+	 * 方法重写的持有者，记录lookup-method , replaced-method元素
+	 */
 	@Nullable
 	private MethodOverrides methodOverrides;
 
+	/**
+	 * 初始化方法，对应bean属性：init-method
+	 */
 	@Nullable
 	private String initMethodName;
 
+	/**
+	 * 销毁方法，对应bean属性：destory-method
+	 */
 	@Nullable
 	private String destroyMethodName;
 
+	/**
+	 * 是否执行initMethod
+	 */
 	private boolean enforceInitMethod = true;
 
+	/**
+	 * 是否执行destorymethod方法
+	 */
 	private boolean enforceDestroyMethod = true;
 
+	/**
+	 * 是否是用户定义的而不是应用程序本身定义的，创建aop时候为true,程序设置
+	 */
 	private boolean synthetic = false;
 
+	/**
+	 * 定义这个bean的应用，ROLE_APPLICATION：用户，ROLE_INFRASTRUCTURE：完全内部使用，与用户无关，  ROLE_SUPPORT：某些复杂配置的一部分。
+	 */
 	private int role = BeanDefinition.ROLE_APPLICATION;
 
+	/**
+	 * bean的描述信息
+	 */
 	@Nullable
 	private String description;
 
+	/**
+	 * bean定义的资源
+	 */
 	@Nullable
 	private Resource resource;
 

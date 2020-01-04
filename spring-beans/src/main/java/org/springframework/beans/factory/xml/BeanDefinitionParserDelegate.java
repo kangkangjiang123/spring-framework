@@ -513,16 +513,23 @@ public class BeanDefinitionParserDelegate {
 
 		try {
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
-
+            //硬编码解析bean定义的一些属性
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
+			//提取描述
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
+			//解析元数据
 			parseMetaElements(ele, bd);
+			//解析lookup-method属性
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
+			//解析replace-method属性
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
 
+			//解析构造函数参数
 			parseConstructorArgElements(ele, bd);
+			//解析property子元素
 			parsePropertyElements(ele, bd);
+			//解析qualifier子元素
 			parseQualifierElements(ele, bd);
 
 			bd.setResource(this.readerContext.getResource());
@@ -697,7 +704,7 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Parse property sub-elements of the given bean element.
 	 */
-	public void parsePropertyElements(Element beanEle, BeanDefinition bd) {
+	public void   parsePropertyElements(Element beanEle, BeanDefinition bd) {
 		NodeList nl = beanEle.getChildNodes();
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);

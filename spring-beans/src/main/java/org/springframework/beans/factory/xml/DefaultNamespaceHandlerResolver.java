@@ -124,6 +124,7 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 			return (NamespaceHandler) handlerOrClassName;
 		}
 		else {
+			//如果缓存中不存在，则通过反射直接获取NamespaceHandler并加入缓存
 			String className = (String) handlerOrClassName;
 			try {
 				Class<?> handlerClass = ClassUtils.forName(className, this.classLoader);
@@ -149,6 +150,7 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 
 	/**
 	 * Load the specified NamespaceHandler mappings lazily.
+	 * 延迟加载指定的NamespaceHandler映射
 	 */
 	private Map<String, Object> getHandlerMappings() {
 		Map<String, Object> handlerMappings = this.handlerMappings;

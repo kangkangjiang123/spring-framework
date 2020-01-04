@@ -173,6 +173,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	public AbstractAutowireCapableBeanFactory() {
 		super();
+		/**
+		 * 此忽略功能是忽略给定接口的自动装配功能
+		 * 比如 A初始化时有属性B，那么会自动初始化B，如果B继承自下面接口，那么将不会被装配
+		 */
 		ignoreDependencyInterface(BeanNameAware.class);
 		ignoreDependencyInterface(BeanFactoryAware.class);
 		ignoreDependencyInterface(BeanClassLoaderAware.class);
@@ -425,7 +429,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	@Override
-	public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
+	public Object
+	applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
 			throws BeansException {
 
 		Object result = existingBean;
@@ -566,12 +571,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Instantiate the bean.
 		// BeanWrapper spring对javabean的包装
 		BeanWrapper instanceWrapper = null;
-		// 如果是单例模式，则在创建bean的时候把缓存里的bean删除（三级缓存解决IOC循环依赖的缓存删除）
+		// 如果是单例模式，则在创建bean的时候把缓存里的bean删除
 		if (mbd.isSingleton()) {
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		// 选择合适的方式进行bean的实例化（缺省/工厂/构造器选择）
 		if (instanceWrapper == null) {
+			//创建完毕的bean对象通过BeanWrapper进行包装
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
 		// 获得实例对象
@@ -597,6 +603,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				mbd.postProcessed = true;
 			}
 		}
+		//判断该bean能否可以提前暴露，只有符合下面三个条件才可以提前暴露，加入三级缓存
 		// 如果可能发生循环引用
 		// Eagerly cache singletons to be able to resolve circular references
 		// even when triggered by lifecycle interfaces like BeanFactoryAware.
@@ -1544,11 +1551,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected void autowireByName(
 			String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
 
+		//从bw中寻找需要依赖注入的属性
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		for (String propertyName : propertyNames) {
 			if (containsBean(propertyName)) {
+				//递归初始化相关的bean
 				Object bean = getBean(propertyName);
 				pvs.add(propertyName, bean);
+				//注册依赖
 				registerDependentBean(propertyName, beanName);
 				if (logger.isTraceEnabled()) {
 					logger.trace("Added autowiring by name from bean name '" + beanName +
@@ -1584,6 +1594,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		Set<String> autowiredBeanNames = new LinkedHashSet<>(4);
+		//寻找bw中需要依赖注入的属性
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		for (String propertyName : propertyNames) {
 			try {
@@ -1591,10 +1602,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				// Don't try autowiring by type for type Object: never makes sense,
 				// even if it technically is a unsatisfied, non-simple property.
 				if (Object.class != pd.getPropertyType()) {
+					//探测指定属性的set方法
 					MethodParameter methodParam = BeanUtils.getWriteMethodParameter(pd);
 					// Do not allow eager init for type matching in case of a prioritized post-processor.
 					boolean eager = !PriorityOrdered.class.isInstance(bw.getWrappedInstance());
 					DependencyDescriptor desc = new AutowireByTypeDependencyDescriptor(methodParam, eager);
+					//解析指定beanName的属性所匹配的值，并把解析到的属性名称存储在autowiredBeanNames
 					Object autowiredArgument = resolveDependency(desc, beanName, autowiredBeanNames, converter);
 					if (autowiredArgument != null) {
 						pvs.add(propertyName, autowiredArgument);

@@ -146,6 +146,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 
 		preProcessXml(root);
+		/**
+		 * fkk 将解析到的元素转化为bean定义
+		 */
 		parseBeanDefinitions(root, this.delegate);
 		postProcessXml(root);
 
@@ -301,6 +304,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
+	 *
+	 * fkk xml中 bean 标签元素的解析为bean定义， delegate为从xml文档中读取，并通过DocumentReader解析的存储对象
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
@@ -308,6 +313,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.
+				/**
+				 * fkk 将拿到的bean定义以及相关信息 去进行bean定义注册
+				 */
 				BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());
 			}
 			catch (BeanDefinitionStoreException ex) {
